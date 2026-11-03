@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>双语电子书生成系统 · 原型设计文档</title>
+<style>
+  :root{
+    --primary:#2563eb; --primary-dark:#1e40af; --primary-light:#eff6ff;
+    --ink:#1f2937; --sub:#6b7280; --line:#e5e7eb; --bg:#f6f8fb; --card:#ffffff;
+    --ok:#16a34a; --warn:#d97706; --err:#dc2626;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"PingFang SC","Microsoft YaHei","Segoe UI",sans-serif;color:var(--ink);background:var(--bg);line-height:1.75;font-size:15px}
+  .layout{display:flex;max-width:1400px;margin:0 auto}
+  nav.toc{width:230px;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto;padding:28px 14px;background:var(--card);border-right:1px solid var(--line)}
+  nav.toc h3{font-size:13px;color:var(--sub);margin-bottom:10px;letter-spacing:.05em}
+  nav.toc a{display:block;padding:7px 10px;font-size:13.5px;color:var(--ink);text-decoration:none;border-radius:8px;margin-bottom:2px}
+  nav.toc a:hover{background:var(--primary-light);color:var(--primary)}
+  main{flex:1;min-width:0;padding:32px 40px 80px}
+  section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:28px 32px;margin-bottom:24px}
+  h1{font-size:26px;margin-bottom:6px}
+  .lead{color:var(--sub);margin-bottom:4px}
+  h2{font-size:20px;margin-bottom:16px;padding-left:12px;border-left:4px solid var(--primary)}
+  h3{font-size:16px;margin:20px 0 10px}
+  h3 .tag{font-size:12px;font-weight:normal;color:var(--sub);margin-left:8px}
+  p{margin-bottom:10px}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin:10px 0 16px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:#f8fafc;font-weight:600;white-space:nowrap}
+  tr:nth-child(even) td{background:#fcfdfe}
+  code{background:#f1f5f9;border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-family:Consolas,"JetBrains Mono",monospace;font-size:12.5px;color:#0f172a}
+  pre{background:#0f172a;color:#e2e8f0;border-radius:10px;padding:16px 18px;overflow-x:auto;font-family:Consolas,monospace;font-size:12.5px;line-height:1.7;margin:10px 0 16px}
+  pre code{background:none;border:none;color:inherit;padding:0}
+  .chip{display:inline-block;background:var(--primary-light);color:var(--primary);border:1px solid #bfdbfe;border-radius:999px;padding:1px 10px;font-size:12px;margin-right:6px}
+  .note{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px 16px;font-size:13.5px;margin:12px 0}
+  .note.blue{background:var(--primary-light);border-color:#bfdbfe}
+  .note b{color:var(--warn)}
+  .note.blue b{color:var(--primary-dark)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .diagram-wrap{overflow-x:auto;padding:6px 0}
+  .diagram-wrap svg{display:block;margin:0 auto;max-width:100%}
+  .api{border:1px solid var(--line);border-radius:12px;margin:0 0 18px;overflow:hidden}
+  .api .head{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#f8fafc;border-bottom:1px solid var(--line)}
+  .method{font-family:Consolas,monospace;font-weight:700;font-size:12.5px;border-radius:6px;padding:2px 10px;color:#fff}
+  .method.post{background:var(--primary)} .method.get{background:var(--ok)}
+  .api .path{font-family:Consolas,monospace;font-size:14px;font-weight:600}
+  .api .desc{color:var(--sub);font-size:13px;margin-left:auto}
+  .api .body{padding:14px 16px;font-size:13.5px}
+  .mock-row{display:flex;flex-wrap:wrap;gap:26px;justify-content:center;padding:8px 0}
+  .mock{flex-shrink:0}
+  .mock .cap{text-align:center;font-size:13px;color:var(--sub);margin-top:10px}
+  .browser{width:400px;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:0 6px 18px rgba(15,23,42,.08)}
+  .browser .bar{background:#f1f5f9;padding:7px 12px;display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--line)}
+  .browser .bar i{width:9px;height:9px;border-radius:50%;background:#d1d5db;display:inline-block}
+  .browser .bar .url{flex:1;background:#fff;border:1px solid var(--line);border-radius:6px;font-size:11px;color:var(--sub);padding:2px 10px;font-style:italic}
+  .screen{padding:18px;height:430px;display:flex;flex-direction:column}
+  .app-head{display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;border-radius:10px;padding:10px 14px;font-size:14px;font-weight:600}
+  .app-head .avatar{width:26px;height:26px;border-radius:50%;background:#fff;color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+  .card-in{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-top:12px}
+  .field{margin-bottom:10px}
+  .field label{display:block;font-size:12px;color:var(--sub);margin-bottom:4px}
+  .field .input{border:1px solid #cbd5e1;border-radius:7px;padding:7px 10px;font-size:13px;background:#fff;color:#94a3b8}
+  .btn{background:var(--primary);color:#fff;border-radius:8px;padding:9px 0;text-align:center;font-size:14px;font-weight:600;margin-top:4px}
+  .btn.ghost{background:#fff;color:var(--primary);border:1px solid var(--primary)}
+  .drop{border:2px dashed #93c5fd;border-radius:12px;background:var(--primary-light);padding:26px 12px;text-align:center;font-size:13px;color:var(--primary-dark)}
+  .drop .ic{font-size:26px}
+  .steps{list-style:none;margin:14px 0}
+  .steps li{display:flex;align-items:center;gap:10px;padding:9px 0;font-size:13.5px;color:#9ca3af;border-bottom:1px dashed var(--line)}
+  .steps li .dot{width:22px;height:22px;border-radius:50%;background:#e5e7eb;color:#9ca3af;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+  .steps li.done{color:var(--ink)} .steps li.done .dot{background:var(--ok);color:#fff}
+  .steps li.doing{color:var(--primary);font-weight:600} .steps li.doing .dot{background:var(--primary);color:#fff}
+  .dl-row{display:flex;gap:10px;margin-top:12px}
+  .dl{flex:1;border-radius:9px;padding:10px 0;text-align:center;font-size:13px;font-weight:600;border:1px solid}
+  .dl.epub{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .dl.pdf{background:#fff;color:var(--err);border-color:#fecaca}
+  .book-item{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--line);border-radius:9px;padding:9px 12px;margin-top:8px;font-size:12.5px}
+  .book-item .st{font-size:11px;color:var(--ok);background:#f0fdf4;border:1px solid #bbf7d0;border-radius:999px;padding:0 8px}
+  .tab{display:flex;gap:18px;border-bottom:1px solid var(--line);margin:14px 0 12px;font-size:13.5px;color:var(--sub)}
+  .tab .on{color:var(--primary);font-weight:700;border-bottom:2px solid var(--primary);padding-bottom:6px}
+  .login-brand{text-align:center;margin:26px 0 8px}
+  .login-brand .logo{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#2563eb,#60a5fa);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:24px;font-weight:700}
+  .login-brand h4{margin-top:8px;font-size:17px}
+  .login-brand p{font-size:12px;color:var(--sub)}
+  .m-browser{width:250px}
+  .m-screen{padding:12px;height:480px}
+  .m-head{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;font-weight:700;color:var(--primary-dark);padding:8px 10px;background:var(--primary-light);border-radius:8px}
+  .er-table{width:240px;flex-shrink:0}
+  .er-table .t-head{background:var(--primary);color:#fff;padding:7px 12px;font-weight:700;font-size:13px;border-radius:8px 8px 0 0}
+  .er-table .t-body{border:1px solid var(--line);border-top:none;border-radius:0 0 8px 8px;font-size:12px;overflow:hidden}
+  .er-table .t-row{padding:4.5px 12px;border-bottom:1px solid #f1f5f9;font-family:Consolas,monospace;display:flex;justify-content:space-between;gap:8px}
+  .er-table .t-row:last-child{border-bottom:none}
+  .er-table .t-row .pk{color:var(--warn);font-weight:700}
+  .er-table .t-row .fk{color:var(--primary);font-weight:700}
+  .er-table .t-row .ty{color:#94a3b8}
+  .er-table.opt .t-head{background:#64748b}
+  .er-relation{font-size:12px;fill:#475569;font-family:Consolas,monospace}
+  footer{color:var(--sub);font-size:12.5px;text-align:center;padding:10px 0 30px}
+  @media (max-width:960px){nav.toc{display:none}main{padding:18px 14px 60px}}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav class="toc">
+  <h3>目录</h3>
+  <a href="#s0">0 · 项目概览</a>
+  <a href="#s1">1 · 需求确认清单</a>
+  <a href="#s2">2 · 技术选型</a>
+  <a href="#s3">3 · 系统架构</a>
+  <a href="#s4">4 · 模块划分与职责</a>
+  <a href="#s5">5 · 核心流程</a>
+  <a href="#s6">6 · 接口设计</a>
+  <a href="#s7">7 · 数据库设计（ER）</a>
+  <a href="#s8">8 · 界面原型</a>
+  <a href="#s9">9 · 非功能设计</a>
+  <a href="#s10">10 · 部署方案</a>
+  <a href="#s11">11 · 风险与对策</a>
+  <a href="#s12">12 · 分工与里程碑</a>
+</nav>
+<main>
+  <p class="lead">Bilingual E-Book Studio</p>
+  <h1>双语电子书生成系统 · 原型设计文档</h1>
+  <p class="lead" style="margin-bottom:0">版本 v1.6 ｜ 2026-11-02 ｜ 2 人课程项目 · AI 辅助开发</p>
+  <p class="lead" style="margin-bottom:0;font-size:12.5px">v1.6 修订：统一 <b>11 张表模型</b>（取消独立 points 表、补齐 risk_alerts、统一枚举），与 DDL 逐字对齐｜ v1.5 修订：新增 <b>积分风控系统</b>（单次超限 / 短时高频 / 单日累计三条规则，命中自动临时封号并通知管理员复核，风控中心支持解封 / 确认封号 / 封号+扣分，规则阈值后台可配）；涉及第 0/1/4/6/7 节｜ v1.4 修订：新增 <b>积分体系</b>（签到 / 余额 / 明细 / 管理员增删清 / 批量下发）与 <b>官方 API 接入</b>（消耗积分免密钥翻译，兑换比例后台可配）与 <b>用户反馈</b>（提交反馈 + 管理端奖励积分 / 扣分 / 封号）｜ v1.3：补齐公告功能 + 管理控制台｜ v1.2：确定 BYOK 模式｜ v1.1：同步原型交互</p>
+
+  <!-- 0 概览 -->
+  <section id="s0">
+    <h2>0 · 项目概览</h2>
+    <p>本系统是一款面向语言学习者的「一键式双语阅读伴侣」Web 应用：用户上传单语种电子书（<code>.txt</code> / <code>.epub</code> / <code>.pdf</code> 文本型），指定目标语言，系统自动完成<strong>解析 → 分句 → 翻译 → 逐段上下对照排版 → 生成双语 EPUB / PDF</strong> 全流程，用户可直接在线阅读并下载成品。</p>
+    <p><span class="chip">纯响应式 Web</span><span class="chip">多翻译引擎可切换（BYOK）</span><span class="chip">官方 API 免密钥翻译（积分）</span><span class="chip">逐段上下对照</span><span class="chip">EPUB + PDF 双导出</span><span class="chip">简单注册登录</span><span class="chip">积分体系 + 签到</span><span class="chip">用户反馈</span><span class="chip">公告栏 + 管理控制台（v1.3）</span><span class="chip">自有云服务器 + 域名部署</span></p>
+  </section>
+
+  <!-- 1 需求确认 -->
+  <section id="s1">
+    <h2>1 · 需求确认清单</h2>
+    <table>
+      <tr><th style="width:180px">决策点</th><th>最终结论</th></tr>
+      <tr><td>产品形态</td><td>纯响应式 Web 应用（PC/移动自适应），不做小程序</td></tr>
+      <tr><td>翻译引擎</td><td>抽象翻译层 + 多 Provider 适配器（百度 / 有道 / DeepL）；<b>BYOK 模式：用户使用自己申请的 API Key 接入</b>（前端可主动切换引擎并填写 Key），未接入时后端拒绝生成（3001）；<b>平台不提供任何体验密钥或兜底密钥</b></td></tr>
+      <tr><td>排版布局</td><td>逐段上下对照（原文一段、译文紧跟一段），不做双栏</td></tr>
+      <tr><td>导出格式</td><td>EPUB + PDF 双格式均生成，用户任选下载</td></tr>
+      <tr><td>用户系统</td><td>邮箱 + 密码注册登录（JWT），任务归属用户，书架即历史记录</td></tr>
+      <tr><td>任务模式</td><td>本期同步处理（前端等待 + 分步提示）；异步任务队列作为架构预留扩展点，不在本期范围</td></tr>
+      <tr><td>公告功能（v1.3）</td><td>用户端首页顶部公告栏：展示管理端发布的公告（类型支持预设「维护通知 / 版本更新 / 系统通知」+ <b>自定义类型</b>），点击条目弹窗查看完整内容</td></tr>
+      <tr><td>管理控制台（v1.3）</td><td>独立管理员账号（<code>users.role='admin'</code>）；11 个模块：概览 / 用户管理 / 积分管理 / 任务管理 / 翻译缓存 / 引擎管理 / API 接入 / 反馈管理 / 风控中心 / 公告管理 / 系统日志，全部操作写入审计日志</td></tr>
+      <tr><td>官方 API 接入（v1.4）</td><td>在原有 BYOK 自接密钥基础上，新增「官方引擎」选项：平台接入自有翻译服务，用户<b>消耗积分即可免密钥翻译</b>，无需自行申请 Key；按实际消耗 token 扣积分（兑换比例后台可配，默认 1 积分 = 1000 tokens）</td></tr>
+      <tr><td>积分体系（v1.4）</td><td>用户端积分栏（余额 + 增减明细）；<b>每日签到</b>获积分（数量后台可改）；新用户注册奖励；管理员可对单个用户增减 / 清空积分、向全体成员批量下发</td></tr>
+      <tr><td>用户反馈（v1.4）</td><td>用户端反馈界面（Bug / 建议 / 体验 / 其他）；管理端阅读反馈并<b>查看提交用户信息</b>，可奖励积分 / 扣分 / 封号处理</td></tr>
+      <tr><td>明确不做</td><td>扫描型 PDF（需 OCR）、多排版模式切换、微信小程序</td></tr>
+      <tr><td>部署目标</td><td>自有云服务器 + 注册域名 + HTTPS，浏览器输入网址直接访问</td></tr>
+      <tr><td>交付物</td><td>可运行的 Web 应用（后端 API + 用户端前端 + 管理控制台）+ 软件设计文档（架构图 / 接口文档 / ER 图 / 界面原型）</td></tr>
+    </table>
+  </section>
+
+  <!-- 2 技术选型 -->
+  <section id="s2">
+    <h2>2 · 技术选型</h2>
+    <table>
+      <tr><th>层级</th><th>选型</th><th>选型理由 / 备选</th></tr>
+      <tr><td>后端框架</td><td><b>Python 3.11 + FastAPI</b></td><td>原生 async 适合 IO 密集（翻译调用、文件流）；自动产出 OpenAPI 接口文档（<code>/docs</code>），接口文档交付物「白送」；类型提示对 AI 编程友好。<span class="tag" style="color:var(--sub)">备选 Flask（更简单但无自动文档）</span></td></tr>
+      <tr><td>前端框架</td><td><b>Vue 3 + Vite + Element Plus + Pinia</b></td><td>组件库自带上传、表单、步骤条、轮询所需的成熟组件；移动端自适应用 CSS 媒体查询 + 流式布局，无需 uni-app 跨端开销。<span class="tag" style="color:var(--sub)">备选 React + Ant Design</span></td></tr>
+      <tr><td>数据库</td><td><b>SQLite</b>（FastAPI 侧用 SQLAlchemy 2.x ORM）</td><td>单文件零部署，2 人课设并发量完全够用；后续换 MySQL 只需改连接串。</td></tr>
+      <tr><td>认证</td><td><b>JWT</b>（PyJWT + passlib/bcrypt）</td><td>无状态，前端存 localStorage；登录态 7 天有效，刷新令牌可选。</td></tr>
+      <tr><td>文件解析</td><td><b>txt</b>：内置 <code>open()</code>；<b>epub</b>：<code>ebooklib</code>；<b>pdf</b>：<code>pdfplumber</code></td><td>pdfplumber 对文本型 PDF 的段落还原质量优于 PyPDF2；扫描型 PDF 检测后明确报错，不承诺 OCR。</td></tr>
+      <tr><td>翻译引擎</td><td><b>自研 Translator 抽象层</b>，内置百度 / 有道 / DeepL 三个适配器</td><td>统一 <code>translate(text, src, tgt, keys) → str</code> 接口；Provider 与密钥<b>均由用户请求指定并携带</b>（BYOK：用户密钥即用即弃、不落地；官方引擎为平台自有密钥，仅存 system_config、不下发前端）；限流、重试策略收敛在一处。</td></tr>
+      <tr><td>电子书生成</td><td><b>EPUB</b>：<code>ebooklib</code>；<b>PDF</b>：<code>reportlab</code></td><td>EPUB 本质是 HTML+OPF 压缩包，实现简单且移动阅读体验好；reportlab platypus 流式排版适合「原文段→译文段」的线性结构，中文字体注册 Noto Sans CJK。</td></tr>
+      <tr><td>前端 HTTP</td><td><b>Axios</b></td><td>拦截器统一处理 JWT 注入与 401 跳转。</td></tr>
+      <tr><td>工程化</td><td><b>Docker Compose</b>（api + nginx 两个服务）</td><td>一键部署到云服务器，本地开发 <code>uvicorn --reload</code> + <code>vite dev</code>。</td></tr>
+    </table>
+    <div class="note blue"><b>翻译引擎接入机制（v1.2 BYOK，与原型交互一致）：</b>① <code>GET /api/engines</code> 返回引擎目录（名称 / 所需密钥字段 / 支持语言对），驱动前端引擎下拉框与密钥输入区的<b>动态渲染</b>；② 用户自行在引擎官网<b>免费申请 API Key</b> 并在页面填写（平台不提供任何密钥）；③ 生成请求 <code>POST /api/books</code> 携带 <code>engine</code> + <code>engine_keys</code>，服务端以最小请求<b>预校验密钥有效性：缺失 / 无效 → 返回 3001「引擎未接入，不可翻译」并拒绝</b>；④ 密钥仅 HTTPS 传输、不落日志、不入库（即用即弃）。BYOK 使平台不占任何翻译额度，切换引擎零代码改动，这是「多种兼容」的核心设计。</div>
+  </section>
+
+  <!-- 3 架构 -->
+  <section id="s3">
+    <h2>3 · 系统架构</h2>
+    <p>整体为「Nginx 反代 + FastAPI 单体服务 + SQLite + 文件目录」的轻量三层结构，业务按 6 个模块内聚划分；翻译调用通过抽象层解耦第三方引擎。</p>
+    <div class="diagram-wrap">
+      <svg width="1000" height="560" viewBox="0 0 1000 560" font-family="PingFang SC, Microsoft YaHei, sans-serif">
+        <defs>
+          <marker id="ar" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#64748b"/></marker>
+        </defs>
+        <!-- 浏览器层 -->
+        <rect x="120" y="20" width="540" height="74" rx="12" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.5"/>
+        <text x="390" y="42" text-anchor="middle" font-size="14" font-weight="700" fill="#1e40af">浏览器（PC / 移动端响应式）</text>
+        <rect x="145" y="52" width="150" height="30" rx="7" fill="#fff" stroke="#bfdbfe"/>
+        <text x="220" y="72" text-anchor="middle" font-size="12.5" fill="#1f2937">文件上传</text>
+        <rect x="315" y="52" width="150" height="30" rx="7" fill="#fff" stroke="#bfdbfe"/>
+        <text x="390" y="72" text-anchor="middle" font-size="12.5" fill="#1f2937">参数配置 / 进度</text>
+        <rect x="485" y="52" width="150" height="30" rx="7" fill="#fff" stroke="#bfdbfe"/>
+        <text x="560" y="72" text-anchor="middle" font-size="12.5" fill="#1f2937">在线阅读 / 下载</text>
+        <!-- 箭头 -->
+        <line x1="390" y1="94" x2="390" y2="124" stroke="#64748b" stroke-width="1.6" marker-end="url(#ar)"/>
+        <line x1="430" y1="124" x2="430" y2="94" stroke="#64748b" stroke-width="1.6" marker-end="url(#ar)"/>
+        <text x="400" y="115" font-size="11.5" fill="#475569">HTTPS</text>
+        <!-- Nginx -->
+        <rect x="120" y="128" width="540" height="46" rx="10" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.5"/>
+        <text x="390" y="156" text-anchor="middle" font-size="13.5" font-weight="700" fill="#334155">Nginx · 反向代理 / TLS 终止 / 静态资源（前端构建产物）</text>
+        <line x1="390" y1="174" x2="390" y2="204" stroke="#64748b" stroke-width="1.6" marker-end="url(#ar)"/>
+        <text x="400" y="195" font-size="11.5" fill="#475569">/api/* → :8000</text>
+        <!-- FastAPI 容器 -->
+        <rect x="70" y="208" width="640" height="176" rx="12" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
+        <text x="86" y="230" font-size="13.5" font-weight="700" fill="#166534">FastAPI 服务（Python 3.11）</text>
+        <rect x="86" y="242" width="608" height="30" rx="7" fill="#fff" stroke="#bbf7d0"/>
+        <text x="390" y="262" text-anchor="middle" font-size="12" fill="#334155">中间件：CORS · JWT 鉴权 · 限流 · 统一异常处理</text>
+        <g font-size="11.5">
+          <rect x="86" y="284" width="96" height="88" rx="8" fill="#fff" stroke="#bbf7d0"/>
+          <text x="134" y="306" text-anchor="middle" font-weight="700" fill="#1f2937">认证模块</text>
+          <text x="134" y="324" text-anchor="middle" fill="#64748b">注册 / 登录</text>
+          <text x="134" y="340" text-anchor="middle" fill="#64748b">JWT 签发</text>
+          <rect x="190" y="284" width="96" height="88" rx="8" fill="#fff" stroke="#bbf7d0"/>
+          <text x="238" y="306" text-anchor="middle" font-weight="700" fill="#1f2937">文件上传</text>
+          <text x="238" y="324" text-anchor="middle" fill="#64748b">存储 / 校验</text>
+          <text x="238" y="340" text-anchor="middle" fill="#64748b">大小·格式</text>
+          <rect x="294" y="284" width="96" height="88" rx="8" fill="#fff" stroke="#bbf7d0"/>
+          <text x="342" y="306" text-anchor="middle" font-weight="700" fill="#1f2937">解析模块</text>
+          <text x="342" y="324" text-anchor="middle" fill="#64748b">Txt / Epub / Pdf</text>
+          <text x="342" y="340" text-anchor="middle" fill="#64748b">去噪·章节</text>
+          <rect x="398" y="284" width="96" height="88" rx="8" fill="#fff" stroke="#bbf7d0"/>
+          <text x="446" y="306" text-anchor="middle" font-weight="700" fill="#1f2937">分段模块</text>
+          <text x="446" y="324" text-anchor="middle" fill="#64748b">句法边界</text>
+          <text x="446" y="340" text-anchor="middle" fill="#64748b">翻译单元</text>
+          <rect x="502" y="284" width="96" height="88" rx="8" fill="#fff" stroke="#bbf7d0"/>
+          <text x="550" y="306" text-anchor="middle" font-weight="700" fill="#1f2937">翻译调度</text>
+          <text x="550" y="324" text-anchor="middle" fill="#64748b">限流 / 重试</text>
+          <text x="550" y="340" text-anchor="middle" fill="#64748b">缓存 / 回退</text>
+          <rect x="606" y="284" width="94" height="88" rx="8" fill="#fff" stroke="#bbf7d0"/>
+          <text x="653" y="306" text-anchor="middle" font-weight="700" fill="#1f2937">排版生成</text>
+          <text x="653" y="324" text-anchor="middle" fill="#64748b">双语 EPUB</text>
+          <text x="653" y="340" text-anchor="middle" fill="#64748b">双语 PDF</text>
+        </g>
+        <text x="390" y="404" text-anchor="middle" font-size="11" fill="#16a34a">模块间以函数调用衔接，数据载体：ParsedBook → SegmentList → BilingualBook</text>
+        <!-- 数据层 -->
+        <line x1="230" y1="384" x2="230" y2="428" stroke="#64748b" stroke-width="1.6" marker-end="url(#ar)"/>
+        <line x1="540" y1="384" x2="540" y2="428" stroke="#64748b" stroke-width="1.6" marker-end="url(#ar)"/>
+        <rect x="120" y="432" width="260" height="58" rx="10" fill="#fff7ed" stroke="#fdba74" stroke-width="1.5"/>
+        <text x="250" y="456" text-anchor="middle" font-size="13" font-weight="700" fill="#9a3412">SQLite（SQLAlchemy）</text>
+        <text x="250" y="476" text-anchor="middle" font-size="11.5" fill="#7c2d12">users · books · segments · translation_cache</text>
+        <rect x="420" y="432" width="290" height="58" rx="10" fill="#faf5ff" stroke="#d8b4fe" stroke-width="1.5"/>
+        <text x="565" y="456" text-anchor="middle" font-size="13" font-weight="700" fill="#6b21a8">文件存储（本地卷）</text>
+        <text x="565" y="476" text-anchor="middle" font-size="11.5" fill="#7e22ce">/data/uploads 原始文件 · /data/output 成品</text>
+        <!-- 右侧：翻译抽象层 -->
+        <rect x="760" y="208" width="216" height="176" rx="12" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.5" stroke-dasharray="0"/>
+        <text x="868" y="232" text-anchor="middle" font-size="13" font-weight="700" fill="#1e40af">Translator 抽象层</text>
+        <text x="868" y="252" text-anchor="middle" font-size="11" fill="#475569">translate(text, src, tgt) → str</text>
+        <rect x="780" y="264" width="176" height="30" rx="7" fill="#fff" stroke="#bfdbfe"/>
+        <text x="868" y="284" text-anchor="middle" font-size="12" fill="#1f2937">百度翻译 Provider</text>
+        <rect x="780" y="300" width="176" height="30" rx="7" fill="#fff" stroke="#bfdbfe"/>
+        <text x="868" y="320" text-anchor="middle" font-size="12" fill="#1f2937">有道智云 Provider</text>
+        <rect x="780" y="336" width="176" height="30" rx="7" fill="#fff" stroke="#bfdbfe"/>
+        <text x="868" y="356" text-anchor="middle" font-size="12" fill="#1f2937">DeepL Provider</text>
+        <line x1="760" y1="296" x2="710" y2="296" stroke="#64748b" stroke-width="1.6" marker-end="url(#ar)"/>
+        <text x="735" y="288" text-anchor="middle" font-size="10.5" fill="#475569">调用</text>
+        <text x="868" y="380" text-anchor="middle" font-size="10.5" fill="#64748b">密钥：仅用户请求携带（BYOK），即用即弃不落地</text>
+        <!-- 底部：扩展点 -->
+        <rect x="120" y="512" width="856" height="36" rx="9" fill="#f8fafc" stroke="#e2e8f0" stroke-dasharray="5 4"/>
+        <text x="548" y="535" text-anchor="middle" font-size="11.5" fill="#64748b">架构预留扩展点（本期不实现）：Celery + Redis 异步任务队列（长书进度条）· 在线阅读器组件 · 翻译结果二次校对 · MySQL 平滑迁移</text>
+      </svg>
+    </div>
+    <p style="font-size:13px;color:var(--sub)">说明：数据流单向 —— 上传文件落盘并登记 <code>books</code> → 解析为纯文本 → 切分为 <code>segments</code> → 逐个查缓存/调翻译 → 排版生成 EPUB 与 PDF 落盘 → <code>books.status=ready</code> → 前端展示并下载。</p>
+  </section>
+
+  <!-- 4 模块 -->
+  <section id="s4">
+    <h2>4 · 模块划分与职责</h2>
+    <table>
+      <tr><th style="width:150px">模块</th><th>职责</th><th style="width:300px">关键接口 / 说明</th></tr>
+      <tr><td><b>认证模块</b></td><td>邮箱 + 密码注册（bcrypt 加盐哈希）、登录签发 JWT、路由级鉴权依赖</td><td><code>POST /api/auth/register</code><br><code>POST /api/auth/login</code></td></tr>
+      <tr><td><b>文件上传模块</b></td><td>接收 multipart 文件；校验扩展名（txt/epub/pdf）与大小（≤10MB）；按 <code>{user_id}/{book_id}/</code> 落盘；登记 books 记录</td><td><code>POST /api/books</code></td></tr>
+      <tr><td><b>解析模块</b></td><td>按扩展名路由到 Parser 策略：TxtParser / EpubParser / PdfParser；统一输出 <code>ParsedBook{title, chapters[]}</code>；过滤页眉页脚、目录、页码等噪音；扫描型 PDF（无可提取文本）检测后报 422</td><td>策略模式：<code>parse(file_path) → ParsedBook</code></td></tr>
+      <tr><td><b>分段模块</b></td><td>按段落（空行/章节）切分；段内过长（&gt;1000 字符）再按句法边界（<code>. ! ? 。</code>）二次切分；生成有序翻译单元列表并写入 segments</td><td><code>segment(ParsedBook) → SegmentList</code></td></tr>
+      <tr><td><b>引擎配置模块</b>（v1.2 BYOK）</td><td>维护引擎目录（名称 / 所需密钥字段 / 支持语言对），前端据此动态渲染下拉框与输入区；<b>生成前校验</b>：以最小真实请求验证用户密钥有效性，缺失 / 无效 → 3001 拒绝；密钥随请求传输、<b>即用即弃不落地</b>；平台不发放任何体验密钥，统计各引擎调用量 / 失败率供管理端监控</td><td><code>GET /api/engines</code></td></tr>
+      <tr><td><b>翻译调度模块</b></td><td>遍历翻译单元：先查 <code>translation_cache</code>（原文哈希 + 语言对命中即返回）；未命中经 Translator 抽象层按请求指定 Provider 调用；QPS 限流、指数退避重试 ≤3 次；失败回退保留原文并标记 <code>is_failed=1</code>；成功后写缓存</td><td><code>translate_segments(book, provider, tgt_lang)</code></td></tr>
+      <tr><td><b>排版生成模块</b></td><td>将「原文段 + 译文段」按上下对照组装：EPUB 用 ebooklib 生成 XHTML 章节（译文段浅色底纹区分）；PDF 用 reportlab 流式排版（原文常规字重、译文灰色斜体），注册中文字体；两文件均落盘 /data/output</td><td><code>build_epub(book)</code> / <code>build_pdf(book)</code></td></tr>
+      <tr><td><b>公告模块</b>（v1.3）</td><td>维护公告（标题 / 类型 / 正文 / 启用状态 / 浏览量）；类型支持预设（维护通知 / 版本更新 / 系统通知）与<b>自定义</b>；<code>GET /api/notices</code> 仅返回启用中的公告供用户端公告栏展示；管理端发布 / 编辑 / 停用 / 删除均写系统日志</td><td><code>GET /api/notices</code><br><code>/api/admin/notices</code>（CRUD）</td></tr>
+      <tr><td><b>积分模块</b>（v1.4）</td><td>积分余额与增减明细（<code>users.points</code> 与 <code>point_logs</code> 流水）；每日签到发积分（数量后台可配）；新用户注册奖励；使用官方引擎时按 token 消耗扣积分；管理员可单用户增减 / 清空、向全体成员批量下发</td><td><code>GET /api/points</code><br><code>POST /api/points/checkin</code><br><code>/api/admin/points/*</code></td></tr>
+      <tr><td><b>官方 API 模块</b>（v1.4）</td><td>平台自有翻译服务接入；用户端「官方引擎」选项（无需填 Key，消耗积分）；按「1 积分 = N tokens」兑换（N 后台可配）；服务端持有官方密钥、不对外暴露；统计官方 API 调用量 / 消耗 token / 失败率</td><td><code>GET /api/engines</code>（含 official 项）<br><code>/api/admin/official-api</code></td></tr>
+      <tr><td><b>反馈模块</b>（v1.4）</td><td>用户端提交反馈（Bug / 建议 / 体验 / 其他，含标题 + 详情 + 联系方式）；管理端阅读反馈并查看提交用户信息（邮箱 / 昵称 / 积分 / 状态），可奖励积分 / 扣分 / 封号</td><td><code>POST /api/feedback</code><br><code>GET /api/feedback/mine</code><br><code>/api/admin/feedback/*</code></td></tr>
+      <tr><td><b>管理控制台模块</b>（v1.3）</td><td>管理员独立登录与 <code>role='admin'</code> 路由级鉴权；概览统计（总量 / 近 7 天 / 各引擎今日调用量 + 失败率，用于 BYOK 失败排查）；用户管理（启用禁用 / 重置密码 / 删除 / 积分调整）；任务管理（全局列表 / 取消进行中 / 重试失败 / 删除）；缓存管理（列表 / 删单条 / 清空）；引擎启停（驱动用户端下拉框）；积分管理；API 接入；反馈管理；系统日志（全量管理操作审计）</td><td><code>POST /api/admin/login</code><br><code>/api/admin/*</code> 系列（见第 6 节）</td></tr>
+    </table>
+    <div class="note"><b>错误与回退原则：</b>翻译单句失败不阻断全书流程——保留原文 + 警示标记，用户可在成品中识别未翻译段落；整本失败（如解析异常、文件超限）则 books 置为 <code>failed</code> 并记录 <code>error_msg</code> 展示给用户。</div>
+  </section>
+
+  <!-- 5 流程 -->
+  <section id="s5">
+    <h2>5 · 核心流程（上传 → 双语成品）</h2>
+    <div class="diagram-wrap">
+      <svg width="1000" height="500" viewBox="0 0 1000 500" font-family="PingFang SC, Microsoft YaHei, sans-serif">
+        <defs><marker id="ar2" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#475569"/></marker></defs>
+        <!-- lifelines -->
+        <g font-size="13" font-weight="700" fill="#334155" text-anchor="middle">
+          <rect x="60" y="14" width="120" height="34" rx="8" fill="#eff6ff" stroke="#93c5fd"/><text x="120" y="36">用户</text>
+          <rect x="260" y="14" width="120" height="34" rx="8" fill="#eff6ff" stroke="#93c5fd"/><text x="320" y="36">前端 (Vue3)</text>
+          <rect x="460" y="14" width="140" height="34" rx="8" fill="#f0fdf4" stroke="#86efac"/><text x="530" y="36">后端 (FastAPI)</text>
+          <rect x="690" y="14" width="150" height="34" rx="8" fill="#faf5ff" stroke="#d8b4fe"/><text x="765" y="36">翻译引擎 (可切换)</text>
+          <rect x="890" y="14" width="90" height="34" rx="8" fill="#fff7ed" stroke="#fdba74"/><text x="935" y="36">SQLite</text>
+        </g>
+        <g stroke="#cbd5e1" stroke-dasharray="4 4">
+          <line x1="120" y1="48" x2="120" y2="470"/><line x1="320" y1="48" x2="320" y2="470"/>
+          <line x1="530" y1="48" x2="530" y2="470"/><line x1="765" y1="48" x2="765" y2="470"/><line x1="935" y1="48" x2="935" y2="470"/>
+        </g>
+        <g font-size="12" fill="#1f2937">
+          <line x1="120" y1="76" x2="312" y2="76" stroke="#475569" stroke-width="1.4" marker-end="url(#ar2)"/><text x="216" y="68" text-anchor="middle">① 选择文件 + 目标语言，点击生成</text>
+          <line x1="320" y1="104" x2="522" y2="104" stroke="#475569" stroke-width="1.4" marker-end="url(#ar2)"/><text x="421" y="96" text-anchor="middle">② POST /api/books（multipart + Bearer JWT）</text>
+          <line x1="530" y1="132" x2="927" y2="132" stroke="#475569" stroke-width="1.4" marker-end="url(#ar2)"/><text x="728" y="124" text-anchor="middle">③ 校验引擎密钥（缺失→3001）+ 格式/大小 → 落盘 → INSERT books(pending)</text>
+          <line x1="530" y1="160" x2="927" y2="160" stroke="#475569" stroke-width="1.4" marker-end="url(#ar2)"/><text x="728" y="152" text-anchor="middle">④ 解析 → 分句 → INSERT segments</text>
+          <!-- loop -->
+          <rect x="545" y="176" width="315" height="118" rx="8" fill="none" stroke="#94a3b8" stroke-dasharray="5 4"/>
+          <rect x="555" y="170" width="60" height="20" rx="4" fill="#f1f5f9" stroke="#cbd5e1"/>
+          <text x="585" y="184" text-anchor="middle" font-size="11" fill="#475569">loop 每个翻译单元</text>
+          <line x1="530" y1="210" x2="757" y2="210" stroke="#475569" stroke-width="1.4" marker-end="url(#ar2)"/><text x="643" y="202" text-anchor="middle">⑤ 调用所选引擎翻译（限流 2 QPS）</text>
+          <line x1="757" y1="232" x2="538" y2="232" stroke="#16a34a" stroke-width="1.4" stroke-dasharray="5 3" marker-end="url(#ar2)"/><text x="643" y="224" text-anchor="middle" fill="#16a34a">译文</text>
+          <line x1="530" y1="258" x2="927" y2="258" stroke="#475569" stroke-width="1.4" marker-end="url(#ar2)"/><text x="728" y="250" text-anchor="middle">⑥ 更新 segment + 写 translation_cache</text>
+          <text x="700" y="284" text-anchor="middle" font-size="11" fill="#b91c1c">※ 重试 3 次仍失败 → 保留原文并标记 is_failed，流程继续</text>
+          <line x1="530" y1="322" x2="927" y2="322" stroke="#475569" stroke-width="1.4" marker-end="url(#ar2)"/><text x="728" y="314" text-anchor="middle">⑦ 生成双语 EPUB + PDF → 落盘</text>
+          <line x1="530" y1="350" x2="927" y2="350" stroke="#475569" stroke-width="1.4" marker-end="url(#ar2)"/><text x="728" y="342" text-anchor="middle">⑧ UPDATE books → ready + 文件路径</text>
+          <line x1="522" y1="382" x2="328" y2="382" stroke="#475569" stroke-width="1.4" marker-end="url(#ar2)"/><text x="425" y="374" text-anchor="middle">⑨ 200 + book（含 epub/pdf 下载 URL）</text>
+          <line x1="312" y1="410" x2="128" y2="410" stroke="#16a34a" stroke-width="1.4" stroke-dasharray="5 3" marker-end="url(#ar2)"/><text x="216" y="402" text-anchor="middle" fill="#16a34a">⑩ 展示成功 + 双格式下载按钮 + 加入书架</text>
+          <line x1="120" y1="440" x2="522" y2="440" stroke="#475569" stroke-width="1.4" marker-end="url(#ar2)"/><text x="321" y="432" text-anchor="middle">⑪ GET /api/books/{id}/download?format=epub|pdf</text>
+          <line x1="522" y1="462" x2="128" y2="462" stroke="#475569" stroke-width="1.4" marker-end="url(#ar2)"/><text x="321" y="454" text-anchor="middle">文件流下载（Content-Disposition）</text>
+        </g>
+      </svg>
+    </div>
+    <div class="note"><b>关于同步处理的取舍：</b>课设书规模（≤500 页）下同步链路足够，实现简单、无队列组件依赖。前端以「步骤指示器 + 预计耗时」缓解等待焦虑；Nginx 与 uvicorn 超时均放宽至 5 分钟。若后续书籍规模上升，架构中已预留 Celery + Redis 异步化改造点（接口形态不变，仅上传后返回 book_id 轮询）。</div>
+  </section>
+
+  <!-- 6 接口 -->
+  <section id="s6">
+    <h2>6 · 接口设计（RESTful）</h2>
+    <p>Base URL：<code>https://&lt;域名&gt;/api</code>　鉴权：除注册/登录外均需在 Header 携带 <code>Authorization: Bearer &lt;JWT&gt;</code>　统一响应包裹：<code>{ "code": 0, "message": "ok", "data": ... }</code></p>
+
+    <div class="api">
+      <div class="head"><span class="method post">POST</span><span class="path">/api/auth/register</span><span class="desc">注册（公开）</span></div>
+      <div class="body">
+        <p>请求（JSON）：<code>{ "email": "a@b.com", "password": "至少6位", "nickname": "可选" }</code></p>
+        <p>响应 data：<code>{ "token": "JWT", "user": { "id": 1, "email": "a@b.com", "nickname": "A" } }</code></p>
+        <p>错误：<code>409</code> 邮箱已注册　<code>400</code> 参数不合法</p>
+      </div>
+    </div>
+    <div class="api">
+      <div class="head"><span class="method post">POST</span><span class="path">/api/auth/login</span><span class="desc">登录（公开）</span></div>
+      <div class="body">
+        <p>请求：<code>{ "email", "password" }</code>　响应 data：<code>{ "token", "user" }</code></p>
+        <p>错误：<code>401</code> 邮箱或密码错误</p>
+      </div>
+    </div>
+    <div class="api">
+      <div class="head"><span class="method post">POST</span><span class="path">/api/books</span><span class="desc">上传并生成双语书（核心接口）</span></div>
+      <div class="body">
+        <p>请求（multipart/form-data）：<code>file</code>（≤10MB，.txt/.epub/.pdf）；<code>target_lang</code>（需被所选引擎支持）；<code>title</code>（可选，缺省取文件名/书内标题）；<b><code>engine</code></b>（baidu|youdao|deepl|official）；<b><code>engine_keys</code></b>（JSON 字符串，字段名随引擎而定，见 <code>GET /api/engines</code>；缺失/无效 → 3001）</p>
+        <p>响应 data（同步完成后返回）：</p>
+        <pre><code>{
+  "id": 42,
+  "status": "ready",              // pending | ready | failed
+  "title": "Pride and Prejudice",
+  "source_lang": "en", "target_lang": "zh",
+  "segments": 1204,
+  "failed_segments": 2,           // 翻译失败保留原文的段落数
+  "epub_url": "/api/books/42/download?format=epub",
+  "pdf_url":  "/api/books/42/download?format=pdf",
+  "created_at": "2026-09-27T10:00:00Z"
+}</code></pre>
+        <p>错误：<code>400</code> 格式不支持　<code>413</code> 文件超过 10MB　<code>422</code> 扫描型 PDF 无法提取文本 / 目标语言不受支持　<b><code>422 (3001)</code> 引擎未接入 / 密钥无效</b></p>
+      </div>
+    </div>
+    <div class="api">
+      <div class="head"><span class="method get">GET</span><span class="path">/api/books</span><span class="desc">我的书架（历史生成记录）</span></div>
+      <div class="body">
+        <p>查询参数：<code>page</code>（默认 1）、<code>size</code>（默认 12）</p>
+        <p>响应 data：<code>{ "total": 8, "items": [ book 对象，同上传响应 ] }</code>（按创建时间倒序）</p>
+      </div>
+    </div>
+    <div class="api">
+      <div class="head"><span class="method get">GET</span><span class="path">/api/books/{id}/download?format=epub|pdf</span><span class="desc">下载双语成品</span></div>
+      <div class="body">
+        <p>校验：book 属于当前用户且 <code>status=ready</code>；返回文件流，<code>Content-Disposition: attachment; filename="书名-中英对照.epub"</code></p>
+        <p>错误：<code>404</code> 不存在/无权访问　<code>409</code> 尚未生成完成</p>
+      </div>
+    </div>
+    <div class="api">
+      <div class="head"><span class="method get">GET</span><span class="path">/api/engines</span><span class="desc">引擎目录（v1.1 新增 · 公开，驱动前端下拉框与密钥输入区动态渲染）</span></div>
+      <div class="body">
+        <p>响应 data：</p>
+        <pre><code>{ "default": "baidu", "engines": [
+  { "id": "baidu", "name": "百度翻译",
+    "key_fields": [ {"k":"app_id","label":"App ID","type":"text"},
+                    {"k":"app_key","label":"App Key","type":"password"} ],
+    "src_langs": ["en","ja","ko","fr","de","zh"],
+    "tgt_langs": ["zh","en","ja","ko","fr","de"] },
+  { "id": "youdao", "name": "有道智云", "key_fields": [ {"k":"app_key",...}, {"k":"secret_key",...} ], ... },
+  { "id": "deepl",  "name": "DeepL",    "key_fields": [ {"k":"api_key",...} ], ... }
+] }</code></pre>
+        <p>前端按 <code>key_fields</code> 动态渲染输入框（对应原型切换引擎时输入区联动变化的交互）。</p>
+      </div>
+    </div>
+    <div class="api">
+      <div class="head"><span class="method get">GET</span><span class="path">/api/languages?engine=baidu</span><span class="desc">指定引擎支持的语言对（query 缺省为服务端默认引擎）</span></div>
+      <div class="body">
+        <p>响应 data：<code>{ "engine": "baidu", "source_langs": ["en","ja","ko","fr","de","zh"], "target_langs": ["zh","en","ja","ko","fr","de"] }</code>（前端切换引擎后重新拉取，联动刷新目标语言下拉框）</p>
+      </div>
+    </div>
+    <div class="api">
+      <div class="head"><span class="method post">POST</span><span class="path">/api/books/{id}/retry</span><span class="desc">对 failed 的书重新生成（可选接口，低成本加分）</span></div>
+      <div class="body">
+        <p>复用已解析的分段，仅重跑失败单元并重新导出。请求：可选 <code>target_lang</code> 变更。</p>
+      </div>
+    </div>
+    <div class="api">
+      <div class="head"><span class="method get">GET</span><span class="path">/api/notices</span><span class="desc">公告列表（v1.3 新增 · 公开，驱动用户端首页公告栏）</span></div>
+      <div class="body">
+        <p>响应 data：<code>[ { "id": 1, "title": "计划维护：…", "type": "maintenance", "body": "完整正文（用户端点击条目时弹窗展示）", "date": "2026-09-27 18:30" } ]</code>（仅启用中的公告、按发布时间倒序；<code>type</code> 为预设值或管理员自定义值，前端按预设值上色、自定义值用中性色）</p>
+      </div>
+    </div>
+
+    <h3>管理端接口（v1.3 新增 · 管理控制台）</h3>
+    <p>独立管理员登录（<code>role='admin'</code>，复用 JWT 鉴权）；<b>所有管理操作自动写入系统日志</b>（审计留痕，对应管理原型「系统日志」模块）：
+    <table>
+      <tr><th style="width:340px">接口</th><th>说明（对应管理原型交互）</th></tr>
+      <tr><td><code>POST /api/admin/login</code></td><td>管理员登录（独立入口，校验 role=admin；管理原型每次打开从登录页开始）</td></tr>
+      <tr><td><code>GET /api/admin/dashboard</code></td><td>概览：总量统计 / 近 7 天生成量 / 各引擎今日调用统计（次数 + 失败率，失败率超阈值前端变色预警）/ 最新任务</td></tr>
+      <tr><td><code>GET /api/admin/users?search=</code></td><td>用户列表（按邮箱 / 昵称搜索）</td></tr>
+      <tr><td><code>PUT /api/admin/users/{id}/status</code></td><td>启用 / 禁用用户（被禁用用户登录被拒）</td></tr>
+      <tr><td><code>POST /api/admin/users/{id}/reset-password</code></td><td>重置密码，返回一次性临时密码（对应原型中可复制的临时密码弹窗）</td></tr>
+      <tr><td><code>DELETE /api/admin/users/{id}</code></td><td>删除用户（级联删 books 与文件目录）</td></tr>
+      <tr><td><code>GET /api/admin/tasks?status=</code></td><td>全局任务列表（全部用户，按状态筛选：pending / processing / failed / ready）</td></tr>
+      <tr><td><code>POST /api/admin/tasks/{id}/cancel</code></td><td>取消进行中任务</td></tr>
+      <tr><td><code>POST /api/admin/tasks/{id}/retry</code></td><td>重试失败任务（解析类失败不可重试，返回 1003，对应原型置灰逻辑）</td></tr>
+      <tr><td><code>DELETE /api/admin/tasks/{id}</code></td><td>删除任务及其文件</td></tr>
+      <tr><td><code>GET /api/admin/cache?search=</code></td><td>缓存列表 + 条目数 / 命中数 / 命中率统计</td></tr>
+      <tr><td><code>DELETE /api/admin/cache/{id}</code>　<code>DELETE /api/admin/cache</code></td><td>删除单条缓存 / 清空全部</td></tr>
+      <tr><td><code>GET /api/admin/engines</code></td><td>引擎目录 + 启用状态 + 今日调用统计（次数 / 占比 / 失败率，BYOK 下用于排查用户密钥 429 / 无效问题）</td></tr>
+      <tr><td><code>PUT /api/admin/engines/{id}/status</code></td><td>引擎启用 / 停用（联动 <code>GET /api/engines</code>，驱动用户端引擎下拉框可用项）</td></tr>
+      <tr><td><code>GET /api/admin/notices</code></td><td>公告列表（含已停用记录）</td></tr>
+      <tr><td><code>POST /api/admin/notices</code></td><td>发布公告 <code>{ "title", "type"（预设或自定义）, "body" }</code>，发布后用户端公告栏立即可见</td></tr>
+      <tr><td><code>PUT /api/admin/notices/{id}</code>　<code>PUT /api/admin/notices/{id}/status</code>　<code>DELETE /api/admin/notices/{id}</code></td><td>编辑 / 停用（可重新启用，记录保留）/ 删除（不可恢复，需前端二次确认）</td></tr>
+      <tr><td><code>GET /api/admin/logs?level=&amp;search=</code></td><td>系统日志（INFO / WARN / ERROR 筛选 + 搜索，管理员全部操作留痕）</td></tr>
+      <tr><td><code>GET /api/admin/points?search=</code></td><td>积分管理：用户积分列表（余额 / 明细）</td></tr>
+      <tr><td><code>PUT /api/admin/points/{user_id}</code></td><td>单个用户积分增减（正负值）、清空（balance=0）</td></tr>
+      <tr><td><code>POST /api/admin/points/bulk</code></td><td>向全体成员批量下发积分 <code>{ "amount", "reason" }</code></td></tr>
+      <tr><td><code>GET /api/admin/points/config</code>　<code>PUT /api/admin/points/config</code></td><td>积分规则配置：签到奖励 / 注册奖励 / 积分↔token 兑换比例</td></tr>
+      <tr><td><code>GET /api/admin/official-api</code>　<code>PUT /api/admin/official-api</code></td><td>官方 API 接入：密钥配置（服务端持有不返显）+ 启用开关 + 今日用量统计</td></tr>
+      <tr><td><code>GET /api/admin/feedback?status=</code></td><td>反馈列表（含提交用户信息：邮箱 / 昵称 / 积分 / 状态）</td></tr>
+      <tr><td><code>POST /api/admin/feedback/{id}/reward</code></td><td>奖励积分 <code>{ "points" }</code></td></tr>
+      <tr><td><code>POST /api/admin/feedback/{id}/penalty</code></td><td>扣分 <code>{ "points" }</code>（恶意反馈）</td></tr>
+      <tr><td><code>POST /api/admin/feedback/{id}/ban</code></td><td>封禁提交用户（置 <code>users.is_active=0</code>）</td></tr>
+    </table></p>
+    <h3>用户端新增接口（v1.4）</h3>
+    <table>
+      <tr><th style="width:340px">接口</th><th>说明</th></tr>
+      <tr><td><code>GET /api/points</code></td><td>当前用户积分余额 + 增减明细列表</td></tr>
+      <tr><td><code>POST /api/points/checkin</code></td><td>每日签到（幂等，重复签到返回已签到），奖励积分数量后台可配</td></tr>
+      <tr><td><code>POST /api/feedback</code></td><td>提交反馈 <code>{ "type", "title", "body", "contact" }</code></td></tr>
+      <tr><td><code>GET /api/feedback/mine</code></td><td>我的反馈记录（含处理状态与奖励）</td></tr>
+    </table>
+    <h3>错误码约定</h3>
+    <table>
+      <tr><th>code</th><th>HTTP</th><th>含义</th></tr>
+      <tr><td>0</td><td>200</td><td>成功</td></tr>
+      <tr><td>1001</td><td>400</td><td>参数错误 / 文件类型不支持</td></tr>
+      <tr><td>1002</td><td>401</td><td>未登录或 token 过期</td></tr>
+      <tr><td>1003</td><td>409</td><td>资源冲突（邮箱已注册 / 书未就绪）</td></tr>
+      <tr><td>2001</td><td>413</td><td>文件超过 10MB 限制</td></tr>
+      <tr><td>2002</td><td>422</td><td>内容不可处理（扫描型 PDF / 语言对不支持）</td></tr>
+      <tr><td><b>3001</b></td><td><b>422</b></td><td><b>翻译引擎未接入：密钥缺失 / 格式非法 / 已过期（对应原型「未接入不可翻译」拦截）</b></td></tr>
+      <tr><td><b>3002</b></td><td><b>402</b></td><td><b>积分不足：使用官方引擎翻译时余额不足以支付（对应原型「积分不足」提示）</b></td></tr>
+      <tr><td>5001</td><td>500</td><td>内部错误（解析异常等，message 含可读原因）</td></tr>
+    </table>
+  </section>
+
+  <!-- 7 数据库 -->
+  <section id="s7">
+    <h2>7 · 数据库设计（SQLite · 11 张表）</h2>
+    <div class="diagram-wrap">
+<svg style="width:100%;height:auto;max-width:1480px" height="1210" viewBox="0 0 1480 1210" font-family="PingFang SC, Microsoft YaHei, Segoe UI, sans-serif" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ar" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#64748b"/></marker><filter id="sh" x="-3%" y="-3%" width="106%" height="108%"><feDropShadow dx="1" dy="2" stdDeviation="2.5" flood-opacity="0.10" flood-color="#0f172a"/></filter></defs>
+<rect width="1480" height="1210" fill="#f8fafc"/>
+<text x="740.0" y="36" text-anchor="middle" font-size="21" font-weight="700" fill="#1e293b">双语电子书生成系统 · 数据库 ER 图 v1.6</text>
+<text x="740.0" y="58" text-anchor="middle" font-size="12.5" fill="#64748b">11 张表（3 核心 · 1 缓存 · 3 积分 · 1 反馈 · 1 风控 · 2 独立）｜ 全部枚举带 CHECK 约束 ｜ 2026-11-02</text>
+<g filter="url(#sh)"><rect x="50" y="90" width="320" height="284" rx="10" fill="#fff" stroke="#cbd5e1"/>
+<path d="M50 100 a10 10 0 0 1 10 -10 h300 a10 10 0 0 1 10 10 v34 h-320 z" fill="#2563eb"/>
+<text x="210.0" y="119" text-anchor="middle" font-size="15" font-weight="700" fill="#fff">users</text></g>
+<text x="64" y="150" font-size="11.5" font-family="Consolas, monospace" fill="#b45309" font-weight="700">PK id</text>
+<text x="356" y="150" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">INTEGER</text>
+<text x="64" y="173" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">email</text>
+<text x="356" y="173" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT UNIQUE</text>
+<text x="64" y="196" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">password_hash</text>
+<text x="356" y="196" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT</text>
+<text x="64" y="219" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">nickname</text>
+<text x="356" y="219" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT</text>
+<text x="64" y="242" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">points</text>
+<text x="356" y="242" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">INTEGER DEFAULT 50</text>
+<text x="64" y="265" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">role</text>
+<text x="356" y="265" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT CHECK(user/admin)</text>
+<text x="64" y="288" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">is_active</text>
+<text x="356" y="288" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">BOOLEAN CHECK(0/1)</text>
+<text x="64" y="311" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">ban_reason</text>
+<text x="356" y="311" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT</text>
+<text x="64" y="334" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">created_at</text>
+<text x="356" y="334" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">DATETIME</text>
+<text x="64" y="357" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">last_login_at</text>
+<text x="356" y="357" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">DATETIME</text>
+<g filter="url(#sh)"><rect x="430" y="60" width="320" height="376" rx="10" fill="#fff" stroke="#cbd5e1"/>
+<path d="M430 70 a10 10 0 0 1 10 -10 h300 a10 10 0 0 1 10 10 v34 h-320 z" fill="#2563eb"/>
+<text x="590.0" y="89" text-anchor="middle" font-size="15" font-weight="700" fill="#fff">books</text></g>
+<text x="444" y="120" font-size="11.5" font-family="Consolas, monospace" fill="#b45309" font-weight="700">PK id</text>
+<text x="736" y="120" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">INTEGER</text>
+<text x="444" y="143" font-size="11.5" font-family="Consolas, monospace" fill="#2563eb" font-weight="700">FK user_id</text>
+<text x="736" y="143" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">INTEGER -&gt; users</text>
+<text x="444" y="166" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">title</text>
+<text x="736" y="166" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT</text>
+<text x="444" y="189" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">source_ext</text>
+<text x="736" y="189" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT CHECK(txt/epub/pdf)</text>
+<text x="444" y="212" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">source_lang / target_lang</text>
+<text x="736" y="212" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT</text>
+<text x="444" y="235" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">engine</text>
+<text x="736" y="235" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT CHECK(4 引擎)</text>
+<text x="444" y="258" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">status</text>
+<text x="736" y="258" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT CHECK(4 态) 索引</text>
+<text x="444" y="281" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">source_path</text>
+<text x="736" y="281" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT 源文件</text>
+<text x="444" y="304" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">char_count</text>
+<text x="736" y="304" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">INTEGER 字符数</text>
+<text x="444" y="327" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">progress</text>
+<text x="736" y="327" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">INTEGER 0-100</text>
+<text x="444" y="350" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">cached_segments</text>
+<text x="736" y="350" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">INTEGER</text>
+<text x="444" y="373" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">epub_path / pdf_path</text>
+<text x="736" y="373" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT</text>
+<text x="444" y="396" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">error_msg</text>
+<text x="736" y="396" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT</text>
+<text x="444" y="419" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">created_at / finished_at</text>
+<text x="736" y="419" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">DATETIME</text>
+<g filter="url(#sh)"><rect x="810" y="90" width="320" height="215" rx="10" fill="#fff" stroke="#cbd5e1"/>
+<path d="M810 100 a10 10 0 0 1 10 -10 h300 a10 10 0 0 1 10 10 v34 h-320 z" fill="#2563eb"/>
+<text x="970.0" y="119" text-anchor="middle" font-size="15" font-weight="700" fill="#fff">segments</text></g>
+<text x="824" y="150" font-size="11.5" font-family="Consolas, monospace" fill="#b45309" font-weight="700">PK id</text>
+<text x="1116" y="150" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">INTEGER</text>
+<text x="824" y="173" font-size="11.5" font-family="Consolas, monospace" fill="#2563eb" font-weight="700">FK book_id</text>
+<text x="1116" y="173" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">INTEGER -&gt; books</text>
+<text x="824" y="196" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">seq</text>
+<text x="1116" y="196" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">INTEGER</text>
+<text x="824" y="219" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">source_text</text>
+<text x="1116" y="219" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT</text>
+<text x="824" y="242" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">translated_text</text>
+<text x="1116" y="242" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT NULL</text>
+<text x="824" y="265" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">is_failed</text>
+<text x="1116" y="265" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">BOOLEAN CHECK(0/1)</text>
+<text x="824" y="288" font-size="11" font-family="Consolas, monospace" fill="#0f766e" font-weight="700">UNIQUE(book_id, seq)</text>
+<g filter="url(#sh)"><rect x="50" y="430" width="320" height="238" rx="10" fill="#fff" stroke="#cbd5e1"/>
+<path d="M50 440 a10 10 0 0 1 10 -10 h300 a10 10 0 0 1 10 10 v34 h-320 z" fill="#475569"/>
+<text x="210.0" y="459" text-anchor="middle" font-size="15" font-weight="700" fill="#fff">translation_cache</text></g>
+<text x="64" y="490" font-size="11.5" font-family="Consolas, monospace" fill="#b45309" font-weight="700">PK id</text>
+<text x="356" y="490" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">INTEGER</text>
+<text x="64" y="513" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">source_hash</text>
+<text x="356" y="513" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT 原文 MD5(32)</text>
+<text x="64" y="536" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">src_lang / tgt_lang</text>
+<text x="356" y="536" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT</text>
+<text x="64" y="559" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">engine</text>
+<text x="356" y="559" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT CHECK(4 引擎)</text>
+<text x="64" y="582" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">translated_text</text>
+<text x="356" y="582" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT</text>
+<text x="64" y="605" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">hit_count</text>
+<text x="356" y="605" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">INTEGER</text>
+<text x="64" y="628" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">created_at</text>
+<text x="356" y="628" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">DATETIME</text>
+<text x="64" y="651" font-size="11" font-family="Consolas, monospace" fill="#0f766e" font-weight="700">UNIQUE(hash,src,tgt,engine)</text>
+<g filter="url(#sh)"><rect x="430" y="470" width="320" height="238" rx="10" fill="#fff" stroke="#cbd5e1"/>
+<path d="M430 480 a10 10 0 0 1 10 -10 h300 a10 10 0 0 1 10 10 v34 h-320 z" fill="#7c3aed"/>
+<text x="590.0" y="499" text-anchor="middle" font-size="15" font-weight="700" fill="#fff">point_logs</text></g>
+<text x="444" y="530" font-size="11.5" font-family="Consolas, monospace" fill="#b45309" font-weight="700">PK id</text>
+<text x="736" y="530" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">INTEGER</text>
+<text x="444" y="553" font-size="11.5" font-family="Consolas, monospace" fill="#2563eb" font-weight="700">FK user_id</text>
+<text x="736" y="553" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">INTEGER -&gt; users</text>
+<text x="444" y="576" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">delta</text>
+<text x="736" y="576" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">INTEGER &lt;&gt; 0</text>
+<text x="444" y="599" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">balance_after</text>
+<text x="736" y="599" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">INTEGER 快照</text>
+<text x="444" y="622" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">type</text>
+<text x="736" y="622" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT CHECK(8 类)</text>
+<text x="444" y="645" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">ref_id</text>
+<text x="736" y="645" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">INTEGER</text>
+<text x="444" y="668" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">description</text>
+<text x="736" y="668" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT</text>
+<text x="444" y="691" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">created_at</text>
+<text x="736" y="691" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">DATETIME</text>
+<g filter="url(#sh)"><rect x="810" y="470" width="320" height="192" rx="10" fill="#fff" stroke="#cbd5e1"/>
+<path d="M810 480 a10 10 0 0 1 10 -10 h300 a10 10 0 0 1 10 10 v34 h-320 z" fill="#7c3aed"/>
+<text x="970.0" y="499" text-anchor="middle" font-size="15" font-weight="700" fill="#fff">checkins</text></g>
+<text x="824" y="530" font-size="11.5" font-family="Consolas, monospace" fill="#b45309" font-weight="700">PK id</text>
+<text x="1116" y="530" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">INTEGER</text>
+<text x="824" y="553" font-size="11.5" font-family="Consolas, monospace" fill="#2563eb" font-weight="700">FK user_id</text>
+<text x="1116" y="553" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">INTEGER -&gt; users</text>
+<text x="824" y="576" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">checkin_date</text>
+<text x="1116" y="576" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">DATE</text>
+<text x="824" y="599" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">reward</text>
+<text x="1116" y="599" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">INTEGER &gt;= 0</text>
+<text x="824" y="622" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">created_at</text>
+<text x="1116" y="622" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">DATETIME</text>
+<text x="824" y="645" font-size="11" font-family="Consolas, monospace" fill="#0f766e" font-weight="700">UNIQUE(user_id, checkin_date)</text>
+<g filter="url(#sh)"><rect x="50" y="700" width="320" height="238" rx="10" fill="#fff" stroke="#cbd5e1"/>
+<path d="M50 710 a10 10 0 0 1 10 -10 h300 a10 10 0 0 1 10 10 v34 h-320 z" fill="#7c3aed"/>
+<text x="210.0" y="729" text-anchor="middle" font-size="15" font-weight="700" fill="#fff">feedbacks</text></g>
+<text x="64" y="760" font-size="11.5" font-family="Consolas, monospace" fill="#b45309" font-weight="700">PK id</text>
+<text x="356" y="760" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">INTEGER</text>
+<text x="64" y="783" font-size="11.5" font-family="Consolas, monospace" fill="#2563eb" font-weight="700">FK user_id</text>
+<text x="356" y="783" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">INTEGER -&gt; users</text>
+<text x="64" y="806" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">type</text>
+<text x="356" y="806" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT CHECK(4 类)</text>
+<text x="64" y="829" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">title / body</text>
+<text x="356" y="829" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT</text>
+<text x="64" y="852" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">contact</text>
+<text x="356" y="852" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT</text>
+<text x="64" y="875" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">status</text>
+<text x="356" y="875" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT CHECK(pending/done)</text>
+<text x="64" y="898" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">reward</text>
+<text x="356" y="898" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">INTEGER</text>
+<text x="64" y="921" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">created_at / handled_at</text>
+<text x="356" y="921" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">DATETIME</text>
+<g filter="url(#sh)"><rect x="430" y="715" width="320" height="215" rx="10" fill="#fff" stroke="#cbd5e1"/>
+<path d="M430 725 a10 10 0 0 1 10 -10 h300 a10 10 0 0 1 10 10 v34 h-320 z" fill="#be123c"/>
+<text x="590.0" y="744" text-anchor="middle" font-size="15" font-weight="700" fill="#fff">risk_alerts</text></g>
+<text x="444" y="775" font-size="11.5" font-family="Consolas, monospace" fill="#b45309" font-weight="700">PK id</text>
+<text x="736" y="775" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">INTEGER</text>
+<text x="444" y="798" font-size="11.5" font-family="Consolas, monospace" fill="#2563eb" font-weight="700">FK user_id</text>
+<text x="736" y="798" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">INTEGER -&gt; users</text>
+<text x="444" y="821" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">rule</text>
+<text x="736" y="821" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT CHECK(single/freq/daily)</text>
+<text x="444" y="844" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">detail</text>
+<text x="736" y="844" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT</text>
+<text x="444" y="867" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">status</text>
+<text x="736" y="867" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT CHECK(pending/resolved)</text>
+<text x="444" y="890" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">resolve</text>
+<text x="736" y="890" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT unban/confirm</text>
+<text x="444" y="913" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">created_at / handled_at</text>
+<text x="736" y="913" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">DATETIME</text>
+<g filter="url(#sh)"><rect x="810" y="700" width="320" height="146" rx="10" fill="#fff" stroke="#cbd5e1"/>
+<path d="M810 710 a10 10 0 0 1 10 -10 h300 a10 10 0 0 1 10 10 v34 h-320 z" fill="#7c3aed"/>
+<text x="970.0" y="729" text-anchor="middle" font-size="15" font-weight="700" fill="#fff">system_config</text></g>
+<text x="824" y="760" font-size="11.5" font-family="Consolas, monospace" fill="#b45309" font-weight="700">PK key</text>
+<text x="1116" y="760" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT</text>
+<text x="824" y="783" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">value</text>
+<text x="1116" y="783" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT</text>
+<text x="824" y="806" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">updated_at</text>
+<text x="1116" y="806" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">DATETIME</text>
+<text x="824" y="829" font-size="10.5" fill="#94a3b8">签到 / 注册 / 兑换比例 / 风控阈值 / 官方密钥</text>
+<g filter="url(#sh)"><rect x="50" y="950" width="320" height="192" rx="10" fill="#fff" stroke="#cbd5e1"/>
+<path d="M50 960 a10 10 0 0 1 10 -10 h300 a10 10 0 0 1 10 10 v34 h-320 z" fill="#0d9488"/>
+<text x="210.0" y="979" text-anchor="middle" font-size="15" font-weight="700" fill="#fff">notices</text></g>
+<text x="64" y="1010" font-size="11.5" font-family="Consolas, monospace" fill="#b45309" font-weight="700">PK id</text>
+<text x="356" y="1010" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">INTEGER</text>
+<text x="64" y="1033" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">type</text>
+<text x="356" y="1033" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT 预设/自定义</text>
+<text x="64" y="1056" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">title / body</text>
+<text x="356" y="1056" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT</text>
+<text x="64" y="1079" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">is_active</text>
+<text x="356" y="1079" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">BOOLEAN CHECK(0/1)</text>
+<text x="64" y="1102" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">views</text>
+<text x="356" y="1102" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">INTEGER</text>
+<text x="64" y="1125" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">created_at / updated_at</text>
+<text x="356" y="1125" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">DATETIME</text>
+<g filter="url(#sh)"><rect x="430" y="950" width="320" height="169" rx="10" fill="#fff" stroke="#cbd5e1"/>
+<path d="M430 960 a10 10 0 0 1 10 -10 h300 a10 10 0 0 1 10 10 v34 h-320 z" fill="#0d9488"/>
+<text x="590.0" y="979" text-anchor="middle" font-size="15" font-weight="700" fill="#fff">logs</text></g>
+<text x="444" y="1010" font-size="11.5" font-family="Consolas, monospace" fill="#b45309" font-weight="700">PK id</text>
+<text x="736" y="1010" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">INTEGER</text>
+<text x="444" y="1033" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">level</text>
+<text x="736" y="1033" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT CHECK(INFO/WARN/ERROR)</text>
+<text x="444" y="1056" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">module</text>
+<text x="736" y="1056" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT</text>
+<text x="444" y="1079" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">message</text>
+<text x="736" y="1079" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">TEXT</text>
+<text x="444" y="1102" font-size="11.5" font-family="Consolas, monospace" fill="#334155" font-weight="400">created_at</text>
+<text x="736" y="1102" text-anchor="end" font-size="9.5" font-family="Consolas, monospace" fill="#94a3b8">DATETIME</text>
+<line x1="370" y1="170" x2="424" y2="150" stroke="#64748b" stroke-width="1.8" marker-end="url(#ar)"/>
+<text x="378" y="140" font-size="11" fill="#64748b">1</text><text x="404" y="132" font-size="11" fill="#64748b">N</text>
+<line x1="750" y1="170" x2="804" y2="170" stroke="#64748b" stroke-width="1.8" marker-end="url(#ar)"/>
+<text x="756" y="160" font-size="11" fill="#64748b">1</text><text x="786" y="160" font-size="11" fill="#64748b">N</text>
+<rect x="1160" y="420" width="270" height="174" rx="10" fill="#fff" stroke="#e2e8f0"/>
+<text x="1176" y="442" font-size="13" font-weight="700" fill="#334155">图例</text>
+<rect x="1176" y="449" width="14" height="14" rx="4" fill="#2563eb"/>
+<text x="1198" y="460" font-size="11" fill="#475569">核心表（3）：users / books / segments</text>
+<rect x="1176" y="477" width="14" height="14" rx="4" fill="#475569"/>
+<text x="1198" y="488" font-size="11" fill="#475569">缓存表（1）：translation_cache</text>
+<rect x="1176" y="505" width="14" height="14" rx="4" fill="#7c3aed"/>
+<text x="1198" y="516" font-size="11" fill="#475569">积分·反馈·配置（4）</text>
+<rect x="1176" y="533" width="14" height="14" rx="4" fill="#be123c"/>
+<text x="1198" y="544" font-size="11" fill="#475569">风控表（1）：risk_alerts</text>
+<rect x="1176" y="561" width="14" height="14" rx="4" fill="#0d9488"/>
+<text x="1198" y="572" font-size="11" fill="#475569">独立表（2）：notices / logs</text>
+<text x="1160" y="640" font-size="11" fill="#94a3b8">缓存按「原文哈希+语言对+引擎」命中，无外键、不级联</text>
+<text x="1160" y="662" font-size="11" fill="#94a3b8">其余 1:N（users 子表，FK user_id）：point_logs /</text>
+<text x="1160" y="684" font-size="11" fill="#94a3b8">checkins / feedbacks / risk_alerts，均 CASCADE</text>
+<text x="50" y="1186" font-size="11" fill="#94a3b8">SQLite 3.35+ ｜ WAL ｜ foreign_keys 需按连接开启 ｜ 建表脚本：database.sql ｜ v1.6 / 2026-11-02</text>
+</svg>
+    </div>
+    <p class="note" style="font-size:12.5px;color:#64748b;margin:6px 0 4px">图较宽，可在图内横向滚动查看；完整原图见 <code>数据库设计/er-diagram.svg</code>。</p>
+    <h3>表一览（11 张，与 <code>database.sql</code> 一一对应）</h3>
+    <table>
+      <tr><th style="width:150px">表</th><th style="width:70px">分类</th><th>关键字段 / 约束</th><th style="width:230px">说明</th></tr>
+      <tr><td><code>users</code></td><td>核心</td><td><code>id</code>、<code>email</code> UNIQUE、<code>password_hash</code>、<code>points</code>、<code>role</code> CHECK(user/admin)、<code>is_active</code>、<code>ban_reason</code></td><td>用户与管理员；积分余额为冗余列</td></tr>
+      <tr><td><code>books</code></td><td>核心</td><td><code>user_id</code> FK、<code>source_ext</code> CHECK、<code>engine</code> CHECK(4 引擎)、<code>status</code> CHECK(4 态)、<code>source_path</code>、<code>char_count</code>、<code>progress</code>、<code>cached_segments</code>、<code>finished_at</code></td><td>任务主表；带源文件路径以便重试</td></tr>
+      <tr><td><code>segments</code></td><td>核心</td><td><code>book_id</code> FK、<code>seq</code>、<code>is_failed</code>、<b>UNIQUE(book_id, seq)</b></td><td>逐段原文与译文</td></tr>
+      <tr><td><code>translation_cache</code></td><td>缓存</td><td><code>source_hash</code>（32 位 MD5）、<code>src_lang</code>/<code>tgt_lang</code>、<code>engine</code>、<b>UNIQUE(4 元组)</b></td><td>松耦合；按引擎分键，避免跨引擎复用</td></tr>
+      <tr><td><code>point_logs</code></td><td>积分</td><td><code>user_id</code> FK、<code>delta</code> ≠ 0、<code>balance_after</code>、<code>type</code> CHECK(8 类)</td><td>只增不改的积分流水</td></tr>
+      <tr><td><code>checkins</code></td><td>积分</td><td><code>user_id</code> FK、<code>checkin_date</code>、<b>UNIQUE(user_id, checkin_date)</b></td><td>每日签到，防重复</td></tr>
+      <tr><td><code>system_config</code></td><td>积分</td><td><code>key</code> PK、<code>value</code></td><td>签到 / 注册 / 兑换比例 / 风控阈值 / 官方密钥</td></tr>
+      <tr><td><code>feedbacks</code></td><td>反馈</td><td><code>user_id</code> FK、<code>type</code> CHECK、<code>status</code> CHECK(pending/done)、<code>reward</code></td><td>用户反馈与处理结果</td></tr>
+      <tr><td><code>risk_alerts</code></td><td>风控</td><td><code>user_id</code> FK、<code>rule</code> CHECK(single/freq/daily)、<code>status</code> CHECK、<code>resolve</code> CHECK(unban/confirm)</td><td>命中规则→自动封号→人工复核</td></tr>
+      <tr><td><code>notices</code></td><td>独立</td><td><code>type</code>、<code>is_active</code>、<code>views</code>、<code>updated_at</code>（触发器维护）</td><td>公告，无外键</td></tr>
+      <tr><td><code>logs</code></td><td>独立</td><td><code>level</code> CHECK(INFO/WARN/ERROR)、<code>module</code>、<code>message</code></td><td>审计日志，无外键</td></tr>
+    </table>
+    <h3>建表要点</h3>
+    <p>① <code>books(user_id, created_at)</code>、<code>books(status)</code>、<code>books(user_id, status)</code> 建索引，书架分页走 <code>WHERE user_id=? ORDER BY created_at DESC</code>；<code>segments</code> 的 <code>UNIQUE(book_id, seq)</code> 已自带索引，<b>不再重复建索引</b>。② 级联：<code>books</code>/<code>point_logs</code>/<code>checkins</code>/<code>feedbacks</code>/<code>risk_alerts</code> 均 <code>ON DELETE CASCADE</code>；<code>translation_cache</code> 与 <code>notices</code>/<code>logs</code>/<code>system_config</code> 不参与级联。③ WAL 模式提升并发读写。④ <b><code>PRAGMA foreign_keys=ON</code> 只对当前连接生效</b>，应用侧必须在每个连接上执行（SQLAlchemy 用 <code>event.listens_for(engine,"connect")</code> 注册），否则级联删除会静默失效。⑤ 全部枚举字段加 <code>CHECK</code> 约束，非法状态在入库前即被拒绝。⑥ <code>notices.updated_at</code> 由 <code>AFTER UPDATE</code> 触发器自动维护。⑦ 缓存以 <code>(source_hash, src_lang, tgt_lang, engine)</code> 为唯一键——不同引擎译文质量不同，不可跨引擎命中。</p>
+    <p class="note blue"><b>官方 API 密钥说明：</b>官方 API 密钥存于 <code>system_config</code>（服务端持有，<b>不对外展示、不下发前端</b>），与 BYOK 用户密钥（即用即弃、不落地）不同——官方密钥是平台自有资产，用于支撑「消耗积分免密钥翻译」能力，管理端「API 接入」窗口可配置但值不返显。</p>
+    <p class="note blue"><b>v1.6 相对 v1.5 的修正：</b>取消独立 <code>points</code> 表（统一为 <code>users.points</code> 冗余列 + <code>point_logs</code> 流水）；补齐 <code>risk_alerts</code> 表；统一 <code>feedbacks.status</code> 为 <code>pending/done</code>、积分说明字段为 <code>description</code>、签到日期为 <code>checkin_date</code>；<code>books</code> 新增 <code>source_path / char_count / progress / cached_segments / started_at / finished_at</code>；<code>translation_cache</code> 新增 <code>engine</code>。</p>
+  </section>
+
+  <!-- 8 原型 -->
+  <section id="s8">
+    <h2>8 · 界面原型（高保真线框）</h2>
+    <h3>PC 端主要页面</h3>
+    <div class="mock-row">
+      <!-- 登录 -->
+      <div class="mock">
+        <div class="browser">
+          <div class="bar"><i></i><i></i><i></i><span class="url">https://bookstudio.example.com/login</span></div>
+          <div class="screen" style="background:linear-gradient(180deg,#eff6ff,#f8fafc)">
+            <div class="login-brand">
+              <div class="logo">B</div>
+              <h4>Bilingual E-Book Studio</h4>
+              <p>一键生成双语对照电子书</p>
+            </div>
+            <div class="card-in">
+              <div class="tab"><span class="on">登 录</span><span>注 册</span></div>
+              <div class="field"><label>邮箱</label><div class="input">you@example.com</div></div>
+              <div class="field"><label>密码</label><div class="input">••••••••</div></div>
+              <div class="btn">登 录</div>
+              <p style="text-align:center;font-size:11.5px;color:var(--sub);margin-top:10px">没有账号？点击「注册」创建</p>
+            </div>
+          </div>
+        </div>
+        <div class="cap">① 登录 / 注册（Tab 切换）</div>
+      </div>
+      <!-- 上传 -->
+      <div class="mock">
+        <div class="browser">
+          <div class="bar"><i></i><i></i><i></i><span class="url">https://bookstudio.example.com/upload</span></div>
+          <div class="screen" style="height:600px">
+            <div class="app-head"><span>📖 Bilingual E-Book Studio</span><span class="avatar">A</span></div>
+            <div class="card-in" style="padding:8px 12px;border-left:3px solid #f59e0b">
+              <b style="font-size:12px">📢 公告</b>
+              <div class="book-item" style="padding:3px 0"><span style="font-size:11px"><span style="color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:5px;padding:0 5px;font-size:10px;margin-right:5px">维护通知</span>计划维护：09-28（周日）23:00–24:00 平台升级</span></div>
+              <div class="book-item" style="padding:3px 0"><span style="font-size:11px"><span style="color:#1d4ed8;background:#eff6ff;border:1px solid #bfdbfe;border-radius:5px;padding:0 5px;font-size:10px;margin-right:5px">版本更新</span>PDF 导出支持自定义页面尺寸与页眉页脚</span><span class="st" style="font-size:10px">点击查看全文</span></div>
+            </div>
+            <div class="drop" style="padding:14px 12px"><div class="ic">⬆️</div><b>点击选择或拖拽文件到此处</b><br><span style="font-size:11px">支持 .txt / .epub / .pdf（文本型），≤ 10MB</span></div>
+            <div class="card-in">
+              <div class="field"><label>目标语言</label><div class="input">▼ 中文（简体）</div></div>
+              <div class="field"><label>书名（可选）</label><div class="input">自动从文件读取，可修改</div></div>
+              <div class="field"><label>翻译引擎 <span style="font-size:10px;color:var(--warn);background:#fffbeb;border:1px solid #fde68a;border-radius:999px;padding:0 6px;font-weight:600">未接入</span></label><div class="input">▼ 百度翻译（切换引擎时 Key 字段联动变化）</div></div>
+              <div class="field"><label>App ID / App Key</label><div class="input">••••••••&ensp;••••••••</div></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:10.5px;color:var(--sub);background:#f8fafc;border:1px dashed var(--line);border-radius:7px;padding:5px 10px;margin-bottom:10px"><span>翻译使用<b>自己申请的</b> API Key（官网免费申请）· 平台不提供密钥</span><b style="color:var(--primary)">BYOK</b></div>
+              <p style="font-size:11px;color:var(--sub);margin-bottom:10px">排版样式：逐段上下对照（固定）</p>
+              <div class="btn">开始生成双语书</div>
+            </div>
+            <div class="card-in" style="padding:10px 14px">
+              <b style="font-size:12.5px">我的书架（3）</b>
+              <div class="book-item"><span>Pride and Prejudice · 英→中</span><span class="st">已完成</span></div>
+              <div class="book-item"><span>The Little Prince · 英→中</span><span class="st">已完成</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="cap">② 公告栏 + 上传 + 参数配置 + 书架</div>
+      </div>
+      <!-- 处理中 -->
+      <div class="mock">
+        <div class="browser">
+          <div class="bar"><i></i><i></i><i></i><span class="url">https://bookstudio.example.com/upload</span></div>
+          <div class="screen" style="justify-content:center">
+            <p style="font-size:14px;font-weight:700;text-align:center">正在生成「Pride and Prejudice」</p>
+            <p style="font-size:12px;color:var(--sub);text-align:center">全书约 1200 段，预计 1–3 分钟，请勿关闭页面</p>
+            <ul class="steps">
+              <li class="done"><span class="dot">✓</span>文件上传与校验</li>
+              <li class="done"><span class="dot">✓</span>内容解析与分句</li>
+              <li class="doing"><span class="dot">…</span>逐段翻译中（引擎：百度翻译）</li>
+              <li><span class="dot">4</span>双语排版与 EPUB / PDF 生成</li>
+            </ul>
+            <div class="card-in" style="text-align:center;font-size:12px;color:var(--sub)">提示：同一本书重复处理会自动命中翻译缓存，速度更快</div>
+          </div>
+        </div>
+        <div class="cap">③ 生成中（步骤指示）</div>
+      </div>
+      <!-- 完成 -->
+      <div class="mock">
+        <div class="browser">
+          <div class="bar"><i></i><i></i><i></i><span class="url">https://bookstudio.example.com/book/42</span></div>
+          <div class="screen">
+            <div class="app-head"><span>📖 Bilingual E-Book Studio</span><span class="avatar">A</span></div>
+            <div class="card-in" style="text-align:center;margin-top:16px">
+              <div style="font-size:26px">✅</div>
+              <b style="font-size:15px">《Pride and Prejudice》中英对照版已生成</b>
+              <p style="font-size:12px;color:var(--sub);margin-top:6px">共 1204 段 · 2 段翻译失败已保留原文 · 用时 96 秒</p>
+              <div class="dl-row">
+                <div class="dl epub">⬇ 下载 EPUB</div>
+                <div class="dl pdf">⬇ 下载 PDF</div>
+              </div>
+            </div>
+            <div class="card-in" style="flex:1;overflow:hidden">
+              <b style="font-size:12.5px">效果预览（逐段上下对照）</b>
+              <p style="font-size:12px;margin-top:8px">It is a truth universally acknowledged…</p>
+              <p style="font-size:12px;background:#eff6ff;border-radius:6px;padding:2px 6px">凡是有钱的单身汉，总想娶位太太…</p>
+              <p style="font-size:12px;margin-top:8px">However little known the feelings…</p>
+              <p style="font-size:12px;background:#eff6ff;border-radius:6px;padding:2px 6px">不管人们愿意承认与否，这层意思…</p>
+            </div>
+          </div>
+        </div>
+        <div class="cap">④ 生成完成 + 双格式下载 + 预览</div>
+      </div>
+      <!-- 管理控制台 -->
+      <div class="mock">
+        <div class="browser">
+          <div class="bar"><i></i><i></i><i></i><span class="url">https://bookstudio.example.com/admin</span></div>
+          <div class="screen" style="background:#f8fafc;display:flex;align-items:stretch">
+            <div style="width:118px;background:#fff;border-right:1px solid var(--line);padding:10px 6px;font-size:11px;color:var(--sub)">
+              <div style="padding:5px 8px;border-radius:6px">📊 概览</div>
+              <div style="padding:5px 8px;border-radius:6px">👥 用户管理</div>
+              <div style="padding:5px 8px;border-radius:6px">📚 任务管理</div>
+              <div style="padding:5px 8px;border-radius:6px">🗂️ 翻译缓存</div>
+              <div style="padding:5px 8px;border-radius:6px">🔧 引擎管理</div>
+              <div style="padding:5px 8px;background:#eff6ff;color:var(--primary);border-radius:6px;font-weight:700">📢 公告管理</div>
+              <div style="padding:5px 8px;border-radius:6px">📋 系统日志</div>
+            </div>
+            <div style="flex:1;padding:10px 12px">
+              <b style="font-size:13px">📢 公告管理</b>
+              <div style="display:flex;gap:8px;margin:8px 0"><span style="font-size:11px;color:var(--sub);border:1px solid var(--line);border-radius:6px;padding:3px 10px;background:#fff">搜索公告标题 / 内容…</span><span style="font-size:11px;color:#fff;background:var(--primary);border-radius:6px;padding:3px 10px;font-weight:600;margin-left:auto">＋ 发布公告</span></div>
+              <table style="width:100%;font-size:10.5px;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden">
+                <tr style="background:#f1f5f9;color:var(--sub)"><th style="text-align:left;padding:5px 8px">标题</th><th style="padding:5px 4px">类型</th><th style="padding:5px 4px">状态</th><th style="padding:5px 4px">浏览量</th><th style="padding:5px 8px">操作</th></tr>
+                <tr style="border-top:1px solid var(--line)"><td style="padding:5px 8px">计划维护：09-28 23:00–24:00 平台升级</td><td style="color:#b45309">维护通知</td><td style="color:#16a34a">● 启用</td><td>486</td><td style="color:var(--sub)">编辑 / 停用 / 删除</td></tr>
+                <tr style="border-top:1px solid var(--line)"><td style="padding:5px 8px">新功能：PDF 导出支持自定义页面尺寸</td><td style="color:#1d4ed8">版本更新</td><td style="color:#16a34a">● 启用</td><td>1203</td><td style="color:var(--sub)">编辑 / 停用 / 删除</td></tr>
+                <tr style="border-top:1px solid var(--line);opacity:.55"><td style="padding:5px 8px">翻译服务限流说明</td><td style="color:#6b7280">自定义类型</td><td style="color:#6b7280">○ 停用</td><td>980</td><td style="color:var(--sub)">编辑 / 重新启用 / 删除</td></tr>
+              </table>
+              <p style="font-size:10px;color:var(--sub);margin-top:6px">发布后即刻展示在用户端顶部公告栏 · 类型支持预设 + 自定义 · 全部操作写入系统日志（审计）</p>
+            </div>
+          </div>
+        </div>
+        <div class="cap">⑤ 管理控制台 · 公告管理（独立登录 · 11 个模块：概览 / 用户 / 积分 / 任务 / 缓存 / 引擎 / API 接入 / 反馈 / 风控 / 公告 / 日志）</div>
+      </div>
+    </div>
+    <h3>移动端自适应（媒体查询 &lt;768px）</h3>
+    <div class="mock-row">
+      <div class="mock">
+        <div class="browser m-browser">
+          <div class="bar"><i></i><i></i><i></i><span class="url">bookstudio.example.com</span></div>
+          <div class="screen m-screen">
+            <div class="m-head"><span>📖 双语书工厂</span><span class="avatar" style="width:22px;height:22px;border-radius:50%;background:#2563eb;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px">A</span></div>
+            <div class="drop" style="padding:18px 8px"><div class="ic">⬆️</div><b style="font-size:12px">选择文件</b><br><span style="font-size:10px">txt / epub / pdf · ≤10MB</span></div>
+            <div class="card-in">
+              <div class="field"><label>目标语言</label><div class="input" style="font-size:12px">▼ 中文（简体）</div></div>
+              <div class="btn" style="padding:8px 0;font-size:13px">开始生成</div>
+            </div>
+            <div class="card-in" style="padding:10px 12px">
+              <b style="font-size:12px">书架</b>
+              <div class="book-item"><span style="font-size:11px">Pride and… 英→中</span><span class="st">完成</span></div>
+              <div class="book-item"><span style="font-size:11px">Little Prince 英→中</span><span class="st">完成</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="cap">移动端：单列布局，控件全宽，操作区拇指可达</div>
+      </div>
+    </div>
+    <p style="font-size:13px;color:var(--sub)">交互要点：登录态存 localStorage，401 自动回登录页；上传按钮提交后置为「生成中」禁用态；下载按钮直接触发 <code>Content-Disposition</code> 文件下载；书架卡片点击回到详情页可重复下载（体现「历史记录」能力）；<b>（v1.3）</b>用户端首页顶部公告栏拉取 <code>GET /api/notices</code>，点击条目弹窗看全文（预设类型彩色标记、自定义类型中性色）；管理控制台为独立登录入口，公告 / 用户 / 任务 / 缓存 / 引擎操作即时生效并全部写入审计日志。</p>
+  </section>
+
+  <!-- 9 非功能 -->
+  <section id="s9">
+    <h2>9 · 非功能设计</h2>
+    <table>
+      <tr><th style="width:140px">维度</th><th>设计</th></tr>
+      <tr><td>安全</td><td>密码 bcrypt 哈希（加盐）；JWT 7 天过期；上传白名单仅 txt/epub/pdf 且双重校验（扩展名 + 文件头 magic number）；防路径穿越（文件名重命名为 UUID）；限流：同 IP 上传 5 次/分钟；<b>引擎密钥（BYOK）：仅 HTTPS 传输、不落日志、不回显响应、不入库（即用即弃），平台不持有任何翻译密钥</b>；管理控制台复用 JWT 并做路由级 <code>role='admin'</code> 校验，管理员全部操作写入系统日志（审计留痕，v1.3）</td></tr>
+      <tr><td>可靠性</td><td>翻译单元级失败回退（保留原文 + 标记）不中断全书；解析异常捕获后 books 置 failed 并给出可读原因；上传/生成全程幂等（重传同名文件生成新 book 记录，不覆盖旧数据）</td></tr>
+      <tr><td>性能</td><td>翻译调用 QPS 限流 2 + 令牌桶；<code>translation_cache</code> 对重复书籍/重复段落免调用；SQLite WAL 模式；文件流式下载，不整体载入内存</td></tr>
+      <tr><td>可维护性</td><td>FastAPI 自动 OpenAPI（/docs）即接口文档；模块单文件内聚（parsers/、translators/、exporters/ 三个包）；.env 管理默认引擎与 JWT_SECRET（翻译密钥全部由用户携带，平台不存储）；Docker 化消除环境差异</td></tr>
+      <tr><td>兼容性</td><td>Chrome/Edge/Safari 近两年版本；移动端 ≥ 360px 宽；PDF 中文字体 Noto Sans CJK 打包进镜像避免服务器缺字体</td></tr>
+    </table>
+  </section>
+
+  <!-- 10 部署 -->
+  <section id="s10">
+    <h2>10 · 部署方案（自有云服务器 + 域名）</h2>
+    <h3>部署拓扑</h3>
+    <pre><code>互联网用户 ──HTTPS(443)──▶ 云服务器 (Nginx)
+                              ├─ /          → 前端静态文件 (Vue3 构建产物 dist/)
+                              ├─ /api/*     → proxy_pass http://127.0.0.1:8000  (FastAPI / uvicorn)
+                              │                ├─ SQLite:  /data/app.db   (volume 持久化)
+                              │                ├─ 上传:    /data/uploads  (volume 持久化)
+                              │                └─ 成品:    /data/output   (volume 持久化)
+                              └─ TLS 证书:    Let's Encrypt (certbot 自动续期)
+
+docker-compose.yml：
+  services:
+    api:
+      build: ./backend          # python:3.11-slim
+      env_file: .env            # 默认引擎 / JWT_SECRET（BYOK：平台不存翻译密钥）
+      volumes: [ ./data:/data ]
+      expose: [ "8000" ]
+    nginx:
+      image: nginx:1.27
+      ports: [ "80:80", "443:443" ]
+      volumes:
+        - ./frontend/dist:/usr/share/nginx/html:ro
+        - ./data:/data:ro                # 成品文件直出
+        - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+        - ./certs:/etc/letsencrypt</code></pre>
+    <h3>上线步骤（按序执行）</h3>
+    <table>
+      <tr><th style="width:60px">步骤</th><th>事项</th><th style="width:220px">注意</th></tr>
+      <tr><td>1</td><td>注册云服务器（1核2G 即可，Ubuntu 22.04）+ 域名（约 ¥60/年），域名解析 A 记录指向服务器公网 IP</td><td>预算合计 &lt; ¥150/年</td></tr>
+      <tr><td>2</td><td>安全组仅开放 80/443/SSH(限 IP)；安装 Docker + Docker Compose</td><td>8000 端口不对外暴露</td></tr>
+      <tr><td>3</td><td><b>域名 ICP 备案</b>（服务器在国内时必做，管局审核约 7–20 个工作日）</td><td>⚠️ 关键路径，建议项目启动第一周就提交，与开发并行</td></tr>
+      <tr><td>4</td><td>部署 Nginx + certbot 签发 HTTPS 证书；配置 <code>/api</code> 反代与 <code>client_max_body_size 12m</code></td><td>证书到期自动续期</td></tr>
+      <tr><td>5</td><td>前端 <code>npm run build</code> 产物挂 Nginx；后端镜像 <code>docker compose up -d</code> 启动</td><td>健康检查 <code>GET /api/health</code></td></tr>
+      <tr><td>6</td><td>配置默认引擎，用<b>自己申请的 API Key</b> 走一遍全流程冒烟测试（BYOK）</td><td>翻译 Key 只存在于用户请求中</td></tr>
+      <tr><td>7</td><td>数据备份脚本：每日 <code>sqlite3 .backup</code> + <code>tar /data</code> 保留 7 天</td><td>低成本保险</td></tr>
+    </table>
+    <div class="note"><b>备案风险预案：</b>ICP 备案周期不可控。若答辩前域名未备案完成，可临时用服务器公网 IP + 端口（如 <code>http://1.2.3.4</code>，Nginx 直接监听 80）完成演示，备案通过后再切换为域名 + HTTPS；接口与前端代码无需任何改动。</div>
+  </section>
+
+  <!-- 11 风险 -->
+  <section id="s11">
+    <h2>11 · 风险与对策</h2>
+    <table>
+      <tr><th style="width:180px">风险</th><th style="width:80px">概率/影响</th><th>对策</th></tr>
+      <tr><td>扫描型 PDF 上传</td><td>高 / 中</td><td>解析阶段检测可提取文本比例，低于阈值直接报 422「暂不支持扫描版」，需求边界在首页文案中明示</td></tr>
+      <tr><td>用户密钥额度耗尽 / 429 限流</td><td>中 / 高</td><td>BYOK 下平台无额度风险，风险在用户侧：translation_cache 复用减少 API 调用；失败退避重试 ≤3 次；单段失败回退保留原文不中断全书；生成前预校验提前提示（3001）</td></tr>
+      <tr><td>用户密钥无效 / 填错</td><td>中 / 中</td><td>生成前最小请求预校验，失败返回 3001 由前端提示「未接入」并定位到具体字段；管理端引擎管理页提供各引擎调用失败率统计辅助排查</td></tr>
+      <tr><td>长书同步生成超时</td><td>中 / 中</td><td>10MB + 500 页上限从源头控制；超时 5 分钟；架构预留 Celery 异步化改造点（仅改传输层，不动业务层）</td></tr>
+      <tr><td>ICP 备案延迟</td><td>中 / 中</td><td>第一周即提交备案；IP+端口直连作为演示兜底（见部署预案）</td></tr>
+      <tr><td>PDF 中文乱码/字体缺失</td><td>低 / 中</td><td>Noto Sans CJK 字体随镜像打包，构建期即注册，避免运行期缺字</td></tr>
+      <tr><td>服务器数据丢失</td><td>低 / 高</td><td>每日自动备份 /data（数据库+文件），保留 7 天；books 元数据可随时重新生成</td></tr>
+    </table>
+  </section>
+
+  <!-- 12 分工 -->
+  <section id="s12">
+    <h2>12 · 两人分工与里程碑</h2>
+    <h3>分工（按模块边界切，接口先行）</h3>
+    <table>
+      <tr><th style="width:80px">成员</th><th>负责范围</th></tr>
+      <tr><td><b>成员 A</b><br>（后端向）</td><td>FastAPI 工程搭建 · 认证模块（含管理员 role 鉴权）· 解析三件套（txt/epub/pdf）· 翻译抽象层 + 百度/有道适配器 · 排版生成（EPUB/PDF）· <b>管理端 API（/api/admin/*，含公告 CRUD，v1.3）</b> · Docker 镜像与服务器部署</td></tr>
+      <tr><td><b>成员 B</b><br>（前端向）</td><td>Vue3 工程搭建 · 登录/注册页 · 上传页 + 书架 + <b>公告栏（v1.3）</b> · 进度步骤页 · <b>管理控制台 11 个模块页面（v1.5）</b> · 响应式适配 · DeepL 适配器 · 设计文档撰写与答辩演示</td></tr>
+    </table>
+    <p style="font-size:13.5px">协作约定：<b>第 1 天冻结接口契约</b>（本文档第 6 节即契约），后端用 FastAPI 的 OpenAPI + mock 数据先行联调，前端不等后端完成即可开发。</p>
+    <h3>里程碑（按 4 周计，弹性可压缩）</h3>
+    <table>
+      <tr><th style="width:110px">阶段</th><th>目标</th><th style="width:240px">完成标志（DoD）</th></tr>
+      <tr><td>第 1 周</td><td>双端骨架 + 接口冻结；<b>同步提交 ICP 备案</b></td><td>登录/注册可用；txt 上传能跑通「解析→翻译→EPUB」最小闭环（仅 txt + 百度）</td></tr>
+      <tr><td>第 2 周</td><td>解析全格式 + 翻译调度完整化</td><td>epub/pdf 可解析；限流/重试/缓存/失败回退生效；书架列表可用</td></tr>
+      <tr><td>第 3 周</td><td>导出双格式 + 管理控制台 + 移动端适配</td><td>EPUB/PDF 下载阅读正常；手机浏览器全流程无适配问题；DeepL 适配器接入；<b>管理控制台 11 个模块可用（含公告发布 / 停用 / 自定义类型，用户端公告栏联动展示）</b></td></tr>
+      <tr><td>第 4 周</td><td>服务器部署 + 文档 + 排练</td><td>域名访问（或 IP 兜底）全流程可用；设计文档定稿；答辩演示 2 遍无事故</td></tr>
+    </table>
+    <div class="note blue"><b>设计文档素材映射：</b>第 3 节 SVG → 架构图；第 5 节 → 时序图；第 7 节 → ER 图；第 6 节 → 接口文档；第 8 节 → 界面原型。答辩 PPT 可直接截图本文档对应章节，无需重画。</div>
+  </section>
+
+  <footer>双语电子书生成系统 · 原型设计 v1.6（BYOK + 积分体系 + 风控 + 11 模块管理控制台）· 2026-11-02</footer>
+</main>
+</div>
+</body>
+</html>

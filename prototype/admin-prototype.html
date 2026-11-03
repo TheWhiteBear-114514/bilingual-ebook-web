@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="2l7ED9AJqThcgn6dFB7tH2" data-dm-ref="4" style=""><head data-page-node-id="wq2hyNJ4DAOhSS8TCU74HQ">
+<meta charset="UTF-8" data-page-node-id="scyzjDJBZvkD0r31RLrtrx">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="y6wxKIBoEyZGXrq2eQmV3Y">
+<title>双语书工厂 · 管理控制台原型</title>
+<style>
+  :root{
+    --primary:#2563eb; --primary-d:#1e40af; --primary-l:#eff6ff;
+    --ink:#1f2937; --sub:#6b7280; --line:#e5e7eb; --bg:#f6f8fb; --card:#fff;
+    --ok:#16a34a; --warn:#d97706; --err:#dc2626;
+    --r:14px; --shadow:0 6px 18px rgba(15,23,42,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{font-family:"PingFang SC","Microsoft YaHei","Segoe UI",sans-serif;color:var(--ink);background:var(--bg);line-height:1.6}
+  button{font-family:inherit;cursor:pointer}
+  input{font-family:inherit}
+  .hidden{display:none!important}
+  .dim{color:var(--sub);font-size:12.5px}
+  .mono{font-family:ui-monospace,Consolas,monospace;font-size:12px}
+  .shake{animation:shake .4s}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}50%{transform:translateX(6px)}75%{transform:translateX(-4px)}}
+  @keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  @keyframes pop{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
+
+  /* ===== 通用组件 ===== */
+  .btn{display:block;width:100%;border:none;border-radius:10px;padding:12px 0;background:var(--primary);color:#fff;font-size:15px;font-weight:600;transition:opacity .15s}
+  .btn:hover{opacity:.9}
+  .btn:active{transform:scale(.99)}
+  .btn.ghost{background:#fff;color:var(--sub);border:1px solid var(--line)}
+  .btn.danger{background:var(--err)}
+  .field{margin-bottom:12px}
+  .field label{display:block;font-size:13px;color:var(--sub);margin-bottom:5px}
+  .field input{width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:10px 12px;font-size:14.5px;background:#fff;color:var(--ink);outline:none;transition:border .15s,box-shadow .15s}
+  .field input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.14)}
+  .ferr{font-size:12px;color:var(--err);min-height:17px;margin-top:4px}
+  .logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#2563eb,#60a5fa);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;flex-shrink:0}
+  .chip{font-size:11.5px;padding:2px 10px;border-radius:999px;font-weight:600;white-space:nowrap;display:inline-block}
+  .chip.gray{color:#6b7280;background:#f3f4f6;border:1px solid #e5e7eb}
+  .chip.blue{color:#1d4ed8;background:#eff6ff;border:1px solid #bfdbfe}
+  .chip.violet{color:#6d28d9;background:#f5f3ff;border:1px solid #ddd6fe}
+  .chip.green{color:#15803d;background:#f0fdf4;border:1px solid #bbf7d0}
+  .chip.red{color:#b91c1c;background:#fef2f2;border:1px solid #fecaca}
+  .chip.amber{color:#b45309;background:#fffbeb;border:1px solid #fde68a}
+  .toast{background:#0f172a;color:#fff;padding:10px 20px;border-radius:999px;font-size:13.5px;box-shadow:0 8px 24px rgba(15,23,42,.25);animation:tin .25s ease;max-width:86vw;text-align:center}
+  @keyframes tin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  #toasts{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);z-index:80;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+  .badge-demo{font-size:11px;color:var(--primary-d);background:var(--primary-l);border:1px solid #bfdbfe;border-radius:999px;padding:2px 10px;white-space:nowrap}
+  .avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#2563eb,#60a5fa);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700}
+  .logout{border:1px solid var(--line);background:#fff;color:var(--sub);border-radius:9px;padding:6px 13px;font-size:13px}
+  .logout:hover{color:var(--err);border-color:#fecaca}
+  .link-btn{border:none;background:none;color:var(--primary);font-size:13px;font-weight:600;text-decoration:underline}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px}
+  .panel.no-pad{padding:0;overflow:hidden}
+  .panel h3{font-size:15px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .note{border-radius:10px;padding:11px 14px;font-size:12.5px;line-height:1.7}
+  .note.blue{background:var(--primary-l);border:1px solid #bfdbfe;color:var(--primary-d)}
+  .note.red{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c}
+
+  /* ===== 登录 ===== */
+  #screen-admin-auth{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:linear-gradient(165deg,#eff6ff 0%,#f6f8fb 55%,#eef2ff 100%);position:relative;overflow:hidden}
+  .blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.5;pointer-events:none}
+  .blob.b1{width:340px;height:340px;background:#bfdbfe;top:-90px;right:-60px}
+  .blob.b2{width:300px;height:300px;background:#ddd6fe;bottom:-80px;left:-70px}
+  .auth-card{position:relative;z-index:1;width:100%;max-width:780px;background:var(--card);border-radius:20px;box-shadow:0 20px 60px rgba(30,64,175,.14);display:grid;grid-template-columns:1fr 1fr;overflow:hidden;animation:pop .35s ease}
+  .auth-brand{background:linear-gradient(150deg,#1e3a8a,#2563eb);color:#fff;padding:38px 32px;display:flex;flex-direction:column;justify-content:center}
+  .auth-brand .logo{width:54px;height:54px;border-radius:15px;font-size:26px;background:rgba(255,255,255,.22);backdrop-filter:blur(4px)}
+  .auth-brand h1{font-size:22px;margin-top:16px}
+  .auth-brand .slogan{font-size:13.5px;opacity:.85;margin-top:6px}
+  .auth-brand ul{list-style:none;margin-top:26px;font-size:13.5px}
+  .auth-brand li{padding:7px 0;display:flex;gap:9px;align-items:flex-start;opacity:.95}
+  .auth-brand li i{width:19px;height:19px;border-radius:50%;background:rgba(255,255,255,.25);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-style:normal;flex-shrink:0;margin-top:2px}
+  .auth-form{padding:38px 34px}
+  .demo-bar{margin-top:16px;background:#f8fafc;border:1px dashed var(--line);border-radius:10px;padding:10px 14px;font-size:12.5px;color:var(--sub);display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .demo-bar button{border:1px solid #bfdbfe;background:var(--primary-l);color:var(--primary);border-radius:7px;padding:4px 12px;font-size:12.5px;font-weight:600;white-space:nowrap}
+  @media (max-width:680px){.auth-card{grid-template-columns:1fr}.auth-brand{padding:26px 28px}.auth-brand ul{display:none}}
+
+  /* ===== 控制台框架 ===== */
+  #screen-admin{min-height:100vh}
+  .ad-topbar{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .ad-topbar .inner{max-width:1280px;margin:0 auto;padding:0 20px;height:60px;display:flex;align-items:center;gap:12px}
+  .brand{font-weight:800;font-size:16px;line-height:1.2}
+  .brand small{display:block;font-size:10px;color:var(--sub);font-weight:600;letter-spacing:.6px;line-height:1.3}
+  .ad-topbar .right{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .top-link{border:1px solid var(--line);background:#fff;color:var(--sub);border-radius:9px;padding:6px 12px;font-size:12.5px;white-space:nowrap}
+  .top-link:hover{color:var(--primary);border-color:#bfdbfe}
+  .hello{font-size:13px;color:var(--sub);white-space:nowrap}
+  .ad-body{max-width:1280px;margin:0 auto;display:flex;gap:20px;padding:20px 20px 70px;align-items:flex-start}
+  .ad-nav{width:188px;flex-shrink:0;position:sticky;top:80px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;gap:4px}
+  .ad-nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:14px;color:var(--sub);cursor:pointer;transition:all .15s;border:1px solid transparent}
+  .ad-nav-item:hover{background:#f8fafc;color:var(--ink)}
+  .ad-nav-item.on{background:var(--primary-l);color:var(--primary-d);font-weight:700;border-color:#bfdbfe}
+  .nav-badge{font-style:normal;font-size:11px;font-weight:700;color:#fff;background:var(--err);border-radius:999px;padding:0 6px;min-width:18px;height:18px;line-height:18px;text-align:center;margin-left:auto;animation:pop .3s ease}
+  .ad-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:16px}
+  .ad-main>section{animation:fadein .25s ease}
+  .view-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+  .view-head h2{font-size:19px}
+  .view-head p{font-size:13px;color:var(--sub)}
+  .ad-foot{font-size:12px;color:#9ca3af;text-align:center;margin-top:14px}
+
+  /* ===== 统计卡片 ===== */
+  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
+  .stat-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:15px 18px;position:relative;overflow:hidden}
+  .stat-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--primary)}
+  .stat-card.c2::before{background:#0d9488}
+  .stat-card.c3::before{background:#7c3aed}
+  .stat-card.c4::before{background:#d97706}
+  .stat-card.c5::before{background:#16a34a}
+  .stat-card .lb{font-size:12.5px;color:var(--sub)}
+  .stat-card .v{font-size:25px;font-weight:800;margin-top:3px;line-height:1.25}
+  .stat-card .d{font-size:11.5px;color:var(--sub);margin-top:3px}
+  .stat-card .d.up{color:var(--ok)}
+  .stat-card .d.warn{color:var(--warn)}
+
+  /* ===== 图表 ===== */
+  .dash-cols{display:grid;grid-template-columns:1.25fr .95fr;gap:16px;align-items:stretch}
+  .chart{display:flex;align-items:flex-end;gap:9px;height:170px;padding-top:6px}
+  .chart .col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:5px;height:100%}
+  .chart .col span{font-size:11px;color:var(--sub)}
+  .chart .col i{width:100%;max-width:38px;background:linear-gradient(180deg,#60a5fa,#2563eb);border-radius:7px 7px 3px 3px}
+  .chart .col.today i{background:linear-gradient(180deg,#34d399,#059669)}
+  .chart .col.today span{color:var(--ok);font-weight:700}
+  .chart .col b{font-size:10.5px;color:#9ca3af;font-weight:400}
+  .qitem{margin-bottom:15px}
+  .qitem:last-child{margin-bottom:2px}
+  .qt{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--sub);margin-bottom:6px}
+  .qt b{color:var(--ink);font-size:13px}
+  .eng-dot{width:9px;height:9px;border-radius:3px;display:inline-block;margin-right:6px;vertical-align:0}
+  .qbar{height:8px;background:#e5e7eb;border-radius:99px;overflow:hidden}
+  .qbar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#2563eb,#60a5fa);transition:width .4s}
+  .qbar.w i{background:linear-gradient(90deg,#d97706,#fbbf24)}
+  .qbar.r i{background:linear-gradient(90deg,#dc2626,#f87171)}
+  .qsub{font-size:11.5px;color:var(--sub);margin-top:5px}
+
+  /* ===== 表格与工具条 ===== */
+  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .tinput{border:1px solid #cbd5e1;border-radius:9px;padding:9px 13px;font-size:13.5px;outline:none;background:#fff;color:var(--ink);min-width:220px}
+  .btn-inline{border:none;border-radius:9px;padding:9px 16px;background:var(--primary);color:#fff;font-size:13.5px;font-weight:600;transition:opacity .15s;white-space:nowrap;flex-shrink:0;margin-left:auto}
+  .btn-inline:hover{opacity:.88}
+  .btn-inline.warn{background:#d97706}
+  .btn-inline.danger{background:var(--err)}
+  .field select,.field textarea{width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:9px;padding:10px 12px;font-size:14px;background:#fff;color:var(--ink);outline:none;font-family:inherit}
+  .field textarea{resize:vertical;min-height:110px;line-height:1.7}
+  .field select:focus,.field textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.14)}
+  .tinput:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.14)}
+  .tstat{font-size:12.5px;color:var(--sub);margin-left:auto}
+  .chip-row{display:flex;gap:7px;flex-wrap:wrap}
+  .chip-f{font-size:12.5px;padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--sub);cursor:pointer;transition:all .15s;white-space:nowrap}
+  .chip-f:hover{border-color:#bfdbfe;color:var(--primary)}
+  .chip-f.on{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:600}
+  .tbl-wrap{overflow-x:auto}
+  .tbl{width:100%;border-collapse:collapse;font-size:13.5px;min-width:780px}
+  .tbl th{font-size:12px;color:var(--sub);font-weight:600;text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);background:#f8fafc;white-space:nowrap}
+  .tbl td{padding:11px 14px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+  .tbl tbody tr:last-child td{border-bottom:none}
+  .tbl tbody tr:hover{background:#f8fafc}
+  .tbl tr.click{cursor:pointer}
+  .tbl .ops{white-space:nowrap;text-align:right}
+  .tbl .ops .mini{margin-left:6px}
+  .mini{border:1px solid var(--line);background:#fff;color:var(--sub);border-radius:7px;padding:4px 10px;font-size:12px;transition:all .15s;white-space:nowrap}
+  .mini:hover{border-color:var(--primary);color:var(--primary)}
+  .mini.danger:hover{border-color:#fecaca;color:var(--err)}
+  .mbar{width:64px;height:6px;background:#e5e7eb;border-radius:99px;overflow:hidden;display:inline-block;vertical-align:middle;margin-right:7px}
+  .mbar i{display:block;height:100%;background:linear-gradient(90deg,#2563eb,#60a5fa);border-radius:99px}
+  .mbar.g i{background:linear-gradient(90deg,#059669,#34d399)}
+  .mbar.r i{background:linear-gradient(90deg,#dc2626,#f87171)}
+  .sw{width:38px;height:21px;border-radius:99px;background:#cbd5e1;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;display:inline-block;vertical-align:middle}
+  .sw i{position:absolute;top:2.5px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+  .sw.on{background:var(--primary)}
+  .sw.on i{left:19px}
+  .sp{display:inline-flex;gap:6px;align-items:center;background:#f8fafc;border:1px solid var(--line);border-radius:999px;padding:5px 13px;font-size:12.5px;color:var(--sub);white-space:nowrap}
+  .sp b{color:var(--ink);font-size:13.5px}
+  .ell{display:inline-block;max-width:330px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle;font-size:12.5px;color:var(--sub)}
+  .empty{padding:38px;text-align:center;color:var(--sub);font-size:13.5px}
+
+  /* ===== 引擎管理 ===== */
+  .eng-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(305px,1fr));gap:16px}
+  .eng-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px;transition:opacity .2s}
+  .eng-card.off{opacity:.72}
+  .eng-card.off .eng-tile{filter:grayscale(.6)}
+  .eng-head{display:flex;align-items:center;gap:11px;margin-bottom:14px}
+  .eng-tile{width:40px;height:40px;border-radius:11px;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex-shrink:0}
+  .eng-head h4{font-size:15.5px;flex:1}
+  .erow{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;padding:9px 12px;background:#f8fafc;border:1px solid var(--line);border-radius:9px}
+  .esub{margin:9px 0 8px;font-size:12px;color:var(--sub)}
+  .krow{display:flex;align-items:center;gap:8px;background:#f8fafc;border:1px solid var(--line);border-radius:9px;padding:8px 11px;margin-bottom:8px;font-size:12.5px}
+  .krow .kl{width:76px;color:var(--sub);flex-shrink:0}
+  .krow .kv{flex:1;font-family:ui-monospace,Consolas,monospace;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .krow button{border:none;background:none;font-size:14px;cursor:pointer;padding:2px;line-height:1}
+  .qtop{display:flex;justify-content:space-between;font-size:12.5px;color:var(--sub);margin-top:14px}
+  .qtop b{color:var(--ink)}
+
+  /* ===== 弹窗 ===== */
+  .modal-mask{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:60;display:flex;align-items:center;justify-content:center;padding:20px}
+  .modal{background:#fff;border-radius:16px;max-width:600px;width:100%;max-height:86vh;overflow:auto;box-shadow:0 24px 70px rgba(15,23,42,.3);animation:pop .25s ease}
+  .modal-head{display:flex;align-items:center;padding:15px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;z-index:1}
+  .modal-head h3{font-size:15.5px;flex:1;padding-right:10px;line-height:1.4}
+  .mx{border:none;background:none;font-size:22px;color:var(--sub);cursor:pointer;line-height:1;padding:0 4px}
+  .mx:hover{color:var(--err)}
+  .modal-body{padding:18px 20px;font-size:13.5px}
+  .modal-foot{display:flex;gap:10px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--line);position:sticky;bottom:0;background:#fff}
+  .modal-foot .btn{width:auto;padding:9px 22px;font-size:13.5px}
+  .tmeta{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:12px}
+  .tmeta span{display:block;font-size:11.5px;color:var(--sub)}
+  .tmeta b{font-size:13px;font-weight:600}
+  .bar{height:10px;background:#e5e7eb;border-radius:99px;overflow:hidden}
+  .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#2563eb,#60a5fa);border-radius:99px;transition:width .3s}
+  .bar-label{display:flex;justify-content:space-between;font-size:12px;color:var(--sub);margin-top:6px}
+  .seg{margin-bottom:14px}
+  .seg .s{font-size:14px;color:var(--ink)}
+  .seg .t{background:var(--primary-l);border-left:3px solid #93c5fd;padding:7px 11px;border-radius:0 8px 8px 0;font-size:13px;color:var(--primary-d);margin-top:5px}
+  .seg.failed .t{background:#fffbeb;border-left-color:#fcd34d;color:#92400e}
+  .flag{display:inline-block;font-size:11px;color:var(--warn);background:#fffbeb;border:1px solid #fde68a;border-radius:999px;padding:0 8px;margin-left:8px;vertical-align:1px}
+
+  /* ===== 移动端 ===== */
+  @media (max-width:900px){
+    .ad-body{flex-direction:column;padding-top:14px;gap:14px}
+    .ad-nav{width:100%;position:static;flex-direction:row;overflow-x:auto;padding:8px}
+    .ad-nav-item{white-space:nowrap;padding:8px 13px;background:#fff;border:1px solid var(--line)}
+    .ad-nav-item.on{background:var(--primary-l)}
+    .dash-cols{grid-template-columns:1fr}
+    .ad-topbar .hello,.ad-topbar .badge-demo{display:none}
+    .stat-card .v{font-size:21px}
+    .tinput{min-width:0;flex:1}
+    .tstat{width:100%;margin-left:0;order:9}
+    .tmeta{grid-template-columns:repeat(2,1fr)}
+  }
+</style>
+<style id="__dm_no_drag_style__">* { -webkit-user-drag: none !important; }</style><style id="__dm_bindable_badge_style__">[data-sp-bindable="database"]{outline:1px dashed #0088ff;outline-offset:2px;border-radius:4px;}[data-sp-bindable="database"] *{pointer-events:none !important;transition:none !important;animation:none !important;}[data-sp-bindable="database"]{transition:none !important;animation:none !important;}</style></head>
+<body data-page-node-id="Idq2ishI1Z6IBGyTXMlVQs" style="">
+<div id="toasts" data-page-node-id="gBCNUEaw5s2SsHY0Rlt5kd"></div>
+
+<!-- ================= 管理员登录 ================= -->
+<div id="screen-admin-auth" data-page-node-id="QEAiwSArV2JDBHORPIRKVq">
+  <div class="blob b1" data-page-node-id="2qHjIpWYAz5TETqutC3OHz"></div><div class="blob b2" data-page-node-id="tjvaDYVdoDmFMa8NDE0AsB"></div>
+  <div class="auth-card" data-page-node-id="1InJjWw8Wz8JdrIW0nSs9r">
+    <div class="auth-brand" data-page-node-id="o8S7oAfRzqHm4hU78ugjLw">
+      <div class="logo" data-page-node-id="cGWrfiCR1rvECuVu9X8TjQ">📖</div>
+      <h1 data-page-node-id="tMyN2TFqRgDoE0ebeFSxyj">双语书工厂 · 管理控制台</h1>
+      <div class="slogan" data-page-node-id="RdUH3PCZhuMcrEdBDcHGBD">Bilingual E-Book Studio · Admin Console</div>
+      <ul data-page-node-id="zkdbJlRIChnjN9jmEHXIs4">
+        <li data-page-node-id="aFu5xRFHoyimy9GeFUYsnc"><i data-page-node-id="BnPISk9Y6tl2sj8D87RRNF">✓</i>用户 / 任务 / 缓存全量管理</li>
+        <li data-page-node-id="Sm66mITP6Ibiw1RsTMkAGN"><i data-page-node-id="cbQzGiwjzyjj5MkEGnIyK8">✓</i>翻译引擎目录与调用监控（BYOK）</li>
+        <li data-page-node-id="sUKWHirCzetHGwAZWkUVYL"><i data-page-node-id="UPaUHrSjdimEHHjZ8CxUbO">✓</i>平台调用统计与失败排查</li>
+        <li data-page-node-id="ZkE2l95gG2AdLqK28nDIjC">📢 公告发布与管理（用户端实时展示）</li>
+      </ul>
+    </div>
+    <div class="auth-form" id="adLoginForm" data-page-node-id="hc0N7cSzwWnoEtcOGzWC7f">
+      <h2 style="font-size:19px;margin-bottom:4px" data-page-node-id="OyOtHu5O2hM30StBEpE4J3">管理员登录</h2>
+      <p style="font-size:13px;color:var(--sub);margin-bottom:18px" data-page-node-id="zCFQ6FSExjriEOS4oG4GT7">仅限运营 / 开发人员访问</p>
+      <div class="field" data-page-node-id="Kp7OXqTujhhDmEXHhlcUjz"><label data-page-node-id="yr83Y3JcEf4pGERDiMSpkG">管理员邮箱</label><input id="adEmail" type="email" placeholder="admin@book.app" data-page-node-id="8xQ5ft43zJvQGgNHxUgVUv"></div>
+      <div class="ferr" data-page-node-id="tmajumDT5J9Gn36MDkYGyJ"></div>
+      <div class="field" data-page-node-id="qpTTGsYTLtrnqe7rMwh2vB"><label data-page-node-id="av6SmPVezRnamEiU7z6vhl">密码</label><input id="adPwd" type="password" placeholder="请输入密码" onkeydown="if(event.key==='Enter')adLogin()" data-page-node-id="psbgw6Ou368h4xjK0x8Rj0"></div>
+      <div class="ferr" id="adPwdErr" data-page-node-id="FI8c7RQg8Bc3Qw6HFbvXGJ"></div>
+      <button class="btn" onclick="adLogin()" data-page-node-id="DoddDjuvbqKNRXkgCnpGSZ">进入控制台</button>
+      <div class="demo-bar" data-page-node-id="d9ZtHihYEAHf6Os0CbwSQ2"><span data-page-node-id="GQG96H2jhnduvuBJMudSzM">演示账号：admin@book.app / admin123</span><button onclick="adFill()" data-page-node-id="ne0xZ5OuETdGPWNogPhAba">一键填充</button></div>
+      <div style="text-align:center;margin-top:16px" data-page-node-id="L4LLJaueaBQ89f8NcMQ4fV"><a class="link-btn" style="font-size:12.5px" href="prototype.html" data-page-node-id="baaBiFQ6nrvpYXkDTfhiXZ">← 返回用户端原型</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= 控制台主体 ================= -->
+<div id="screen-admin" class="hidden" data-page-node-id="71ENRp0n4PewGpRcPfOhmd">
+  <div class="ad-topbar" data-page-node-id="wO2vWXmHK1RkIAdhcr179j">
+    <div class="inner" data-page-node-id="JnTzbrrRTmdkBzSpIKVNgW">
+      <div class="logo" style="width:38px;height:38px;font-size:18px;border-radius:10px" data-page-node-id="eWkqTEHNH93YNyva8ZMuEv">📖</div>
+      <div class="brand" data-page-node-id="NSgdFyy8WlNWeUDhYNu4f8">双语书工厂<small data-page-node-id="J90Wr0aZDpQzHuHEuO0CL8">管理控制台 ADMIN</small></div>
+      <span class="badge-demo" data-page-node-id="KTzZRHnX2zyNRozMW53T3b">原型 · Mock 数据</span>
+      <div class="right" data-page-node-id="CRQxyz3y85JOpeEO8qxxxa">
+        <button class="top-link" onclick="location.href='prototype.html'" data-page-node-id="ZMJ3viHbU3pjdxGqOFtgid">打开用户端 ↗</button>
+        <div class="hello" data-page-node-id="Nu4RrkMV8LoCVdrU5vfZyB">你好，<b data-page-node-id="dVPfxgfeMNEtBjFYNSl0Hk">admin</b></div>
+        <div class="avatar" data-page-node-id="U3P6nzHRCQzDaKHFEAzhKE">A</div>
+        <button class="logout" onclick="adLogout()" data-page-node-id="tPIHdpt2U5BR0k4CULkj04">退出</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="ad-body" data-page-node-id="j7KTa8JIHBSiEeZeQcYjWw">
+    <nav class="ad-nav" id="adNav" data-page-node-id="0R0QwYUU81WW2kvxfvZFa5">
+      <div class="ad-nav-item" data-v="dash" onclick="nav('dash')" data-page-node-id="bw556GMFCAc4OtaHDi4PBR">📊<span data-page-node-id="1bhCjPjkNROKwhAAHhaJxt">概览</span></div>
+      <div class="ad-nav-item" data-v="users" onclick="nav('users')" data-page-node-id="GefMDLhGvnbcrCugAY1AbP">👥<span data-page-node-id="MAy0l5dFqhbQC0GelDtbcA">用户管理</span></div>
+      <div class="ad-nav-item" data-v="points" onclick="nav('points')">⚡<span>积分管理</span></div>
+      <div class="ad-nav-item" data-v="tasks" onclick="nav('tasks')" data-page-node-id="b0iAaa0QEa3ry5QC8K470u">📚<span data-page-node-id="BjqBXgl4sPFVjcAJL8pFuj">任务管理</span></div>
+      <div class="ad-nav-item" data-v="cache" onclick="nav('cache')" data-page-node-id="ewh4uJwSVPZE8GsdQKomvc">🗂️<span data-page-node-id="7wZvtpgUkyuFu9cKW7xJ4I">翻译缓存</span></div>
+      <div class="ad-nav-item" data-v="engines" onclick="nav('engines')" data-page-node-id="lCHF3dgoyWYJgYvXozsVr0">🔧<span data-page-node-id="Ds582KsyrGQiRqXJbvbXlY">引擎管理</span></div>
+      <div class="ad-nav-item" data-v="officialapi" onclick="nav('officialapi')">🔑<span>API 接入</span></div>
+      <div class="ad-nav-item" data-v="feedback" onclick="nav('feedback')">💬<span>反馈管理</span></div>
+      <div class="ad-nav-item" data-v="risk" onclick="nav('risk')">🛡️<span>风控中心</span><i class="nav-badge" id="riskBadge" style="display:none">2</i></div>
+      <div class="ad-nav-item on" data-v="notices" onclick="nav('notices')" data-page-node-id="DxnOzV4aVlt0JA8d1lAVzP" style="">📢<span data-page-node-id="eCO9oFoIOVEMcQHoz0gVsn">公告管理</span></div>
+      <div class="ad-nav-item" data-v="logs" onclick="nav('logs')" data-page-node-id="1a0tKN37l6UlGKMaEdnYaI">📋<span data-page-node-id="jrgWxRMSMiwaECWJYn1vLq">系统日志</span></div>
+    </nav>
+
+    <main class="ad-main" data-page-node-id="bnWYH5RpIgPftXbC0L1NJQ">
+      <!-- 概览 -->
+      <section id="view-dash" data-page-node-id="etakEIQ0eHeHP0yfbc5bFC" class="hidden">
+        <div class="view-head" data-page-node-id="OTSaQVGKqPrsEJUoK3TjZT"><h2 data-page-node-id="JYOyHiCe61nM4RMvX6GACg">概览</h2><p id="dashDate" data-page-node-id="avjesTXozCnhW7gMYgsG2N">今天是 09-27 · 服务运行中 v1.1.0</p></div>
+        <div id="riskBanner"></div>
+        <div class="stat-grid" id="statGrid" data-page-node-id="3t0rTZygLpBzdTZgESreA5"><div class="stat-card c1"><div class="lb">注册用户</div><div class="v">8</div><div class="d up">6 正常 · 今日新增 1</div></div><div class="stat-card c2"><div class="lb">累计书籍</div><div class="v">138</div><div class="d up">今日 +5</div></div><div class="stat-card c3"><div class="lb">进行中任务</div><div class="v">3</div><div class="d warn">另有排队 1 个</div></div><div class="stat-card c4"><div class="lb">今日翻译量</div><div class="v">18.6万 字符</div><div class="d up">缓存命中 42% · 节省 API 调用</div></div><div class="stat-card c5"><div class="lb">缓存命中率</div><div class="v">42.6%</div><div class="d up">累计命中 1,284 次</div></div></div>
+        <div class="dash-cols" data-page-node-id="2P7ZuzFtPI2NXSC2hERgaR">
+          <div class="panel" data-page-node-id="DQAuH5NPoMzp8GCLmPhDIb">
+            <h3 data-page-node-id="8gG1YH67H152iKgiuvKEXd">近 7 天书籍生成量</h3>
+            <div class="chart" id="chart" data-page-node-id="2Fnyzx7MkbNgCcWKf5TxCG"><div class="col"><span>4</span><i style="height:50px"></i><b>21</b></div><div class="col"><span>7</span><i style="height:78px"></i><b>22</b></div><div class="col"><span>5</span><i style="height:59px"></i><b>23</b></div><div class="col"><span>9</span><i style="height:96px"></i><b>24</b></div><div class="col"><span>12</span><i style="height:123px"></i><b>25</b></div><div class="col"><span>8</span><i style="height:87px"></i><b>26</b></div><div class="col today"><span>13</span><i style="height:132px"></i><b>27</b></div></div>
+          </div>
+          <div class="panel" data-page-node-id="3Q5JhQzpqUSjpLu9z3sZIB">
+            <h3 data-page-node-id="TC5rFT2We08LiohmWztqKj">翻译引擎调用统计 <span class="dim" style="font-weight:400" data-page-node-id="K8QpE250lnBJ6rrc6NQ2qm">（今日 · 点击切到引擎管理）</span></h3>
+            <div id="dashQuota" data-page-node-id="MJAtb2pZm2RiqlBOH1cW49"><div class="qitem"><div class="qt"><span><span class="eng-dot" style="background:#2563eb"></span>百度翻译</span><b>1,284 次</b></div><div class="qbar "><i style="width:82%"></i></div><div class="qsub">占平台调用 82% · 今日 18.6万 字符 · 失败率 2.1%</div></div><div class="qitem"><div class="qt"><span><span class="eng-dot" style="background:#0d9488"></span>有道智云</span><b>268 次</b></div><div class="qbar w"><i style="width:17%"></i></div><div class="qsub">占平台调用 17% · 今日 5.2万 字符 · 失败率 5.6%</div></div><div class="qitem"><div class="qt"><span><span class="eng-dot" style="background:#4f46e5"></span>DeepL <span class="chip gray">已停用</span></span><b>12 次</b></div><div class="qbar "><i style="width:2%"></i></div><div class="qsub">占平台调用 1% · 今日 4,200 字符 · 失败率 0%</div></div></div>
+          </div>
+        </div>
+        <div class="panel no-pad" data-page-node-id="KOy8FtFzZRM0vAlvlC8vvt">
+          <div style="padding:18px 20px 12px" data-page-node-id="qu5M7rUZvZ2YvwNzyklB0A"><h3 style="margin:0" data-page-node-id="r9EVEGZrnuFxGrWstdbF3V">最新任务 <button class="link-btn" onclick="nav('tasks')" data-page-node-id="ohcsEcAySJBITgkjT3oa3q">查看全部 →</button></h3></div>
+          <div class="tbl-wrap" data-page-node-id="zAeWyTsoQqlVzwwyTdMZKu"><table class="tbl" style="min-width:640px" data-page-node-id="dA5oUHpcQxqSO7hTc5d16S">
+            <thead data-page-node-id="nV6hZhio1amKyrgWUBP2Ug"><tr data-page-node-id="HzQjicHTcG3WdlxJmzOs6K"><th data-page-node-id="wYbyBat5pBArdfSox4Sb3U">ID</th><th data-page-node-id="rEmwXknu5gaH92K0FQkwSi">书名</th><th data-page-node-id="yHFufhngCKNCelmVwnSDtA">用户</th><th data-page-node-id="M8ADxf9GPo7H2gmaRjJcuJ">语言对</th><th data-page-node-id="tUgXqCAusEkyGuzI3Lo5Hu">状态</th><th data-page-node-id="79x6jZedtCfnoFVYhhRBXR">提交时间</th></tr></thead>
+            <tbody id="dashTasks" data-page-node-id="FhnuFgIjegFDmuK2avMRep"><tr class="click" onclick="nav('tasks');openTask(1024)"><td class="dim">#1024</td><td><b>Pride and Prejudice</b></td><td class="dim">demo@book.app</td><td>EN→ZH</td><td><span class="chip green">已完成</span></td><td class="dim">09-27 21:02</td></tr><tr class="click" onclick="nav('tasks');openTask(1023)"><td class="dim">#1023</td><td><b>The Great Gatsby</b></td><td class="dim">alice@ex.com</td><td>EN→ZH</td><td><span class="chip blue">翻译中</span></td><td class="dim">09-27 21:18</td></tr><tr class="click" onclick="nav('tasks');openTask(1022)"><td class="dim">#1022</td><td><b>1Q84</b></td><td class="dim">alice@ex.com</td><td>JA→ZH</td><td><span class="chip blue">翻译中</span></td><td class="dim">09-27 21:05</td></tr><tr class="click" onclick="nav('tasks');openTask(1021)"><td class="dim">#1021</td><td><b>The Little Prince</b></td><td class="dim">bob@ex.com</td><td>FR→ZH</td><td><span class="chip violet">排版生成中</span></td><td class="dim">09-27 20:48</td></tr><tr class="click" onclick="nav('tasks');openTask(1020)"><td class="dim">#1020</td><td><b>Harry Potter and the Sorcerer’s Stone</b></td><td class="dim">erin@mail.cn</td><td>EN→ZH</td><td><span class="chip green">已完成</span></td><td class="dim">09-27 19:32</td></tr></tbody>
+          </table></div>
+        </div>
+      </section>
+
+      <!-- 用户管理 -->
+      <section id="view-users" class="hidden" data-page-node-id="UYAAtVFJigNvF4ITD2TAO0">
+        <div class="view-head" data-page-node-id="hK5TaikcXIGzjDhH6Fx3ga"><h2 data-page-node-id="iDZylB0w0rnLBwZI9bDQnC">用户管理</h2><p data-page-node-id="Yr8EKJF9eEHBUf9oQBn0u7">共 <b id="userCount" data-page-node-id="xSeCh7JgjqkGkDsGgcOGqG">8</b> 人 · <b id="userActive" style="color:var(--ok)" data-page-node-id="nnCW1KUmbOVdadfjFvBHRd">6</b> 正常 · <b id="userOff" style="color:var(--warn)" data-page-node-id="1Qvt0VPujuJGFLpq5lhDmF">2</b> 已禁用</p></div>
+        <div class="toolbar" data-page-node-id="o6rGHckzlazpEoIRXoBpoI">
+          <input id="userSearch" class="tinput" placeholder="搜索邮箱 / 昵称…" oninput="renderUsers()" data-page-node-id="HPj3ixDqzrJunm0OJvxF5P">
+          <span class="tstat" id="userFilterStat" data-page-node-id="qFtjTnkIO7E3kauwVbp8tP"></span>
+        </div>
+        <div class="panel no-pad" data-page-node-id="kIC6a3Hu0xnvjHDHfiMhkl">
+          <div class="tbl-wrap" data-page-node-id="wRjYcuUgCZMwxoxUx3rkbz"><table class="tbl" data-page-node-id="NhP2brSkeiE6pudhJNHfc2">
+            <thead data-page-node-id="NlYVO6EqFdF7dhgPHFjcZ1"><tr data-page-node-id="uvLWl3nmKAcbAh85Em163w"><th data-page-node-id="HQkxm7boFTmvcEUwwCuazZ">ID</th><th data-page-node-id="WPDs7LsESbOZQBe5Hd5WJm">邮箱</th><th data-page-node-id="8wbOIcbAc5mHrkWiFTpLYZ">昵称</th><th data-page-node-id="I6d7uBAJdpQ5EIAilBQFcS">书籍数</th><th>积分</th><th data-page-node-id="DZSmVJtFJNK3ZjLw5jKnUt">注册时间</th><th data-page-node-id="xDmj1U4IUaDuaXC7nV4uuZ">最近活跃</th><th data-page-node-id="tS0xydieS5DdMzQ8KK36t9">状态</th><th style="text-align:right" data-page-node-id="WW1vpWg8n3HHmZQNtdnTo1">操作</th></tr></thead>
+            <tbody id="userTbody" data-page-node-id="n8xAfP5obHvHtHB3rZ6eXC"><tr><td class="dim">#101</td><td><b>demo@book.app</b></td><td>演示用户</td><td>2</td><td class="dim">2026-09-20 10:12</td><td class="dim">2026-09-27 21:40</td><td><span class="sw on" title="点击禁用" onclick="toggleUser(101)"><i></i></span></td><td class="ops"><button class="mini" onclick="resetPwd(101)">重置密码</button><button class="mini danger" onclick="delUser(101)">删除</button></td></tr><tr><td class="dim">#102</td><td><b>erin@mail.cn</b></td><td>Erin</td><td>7</td><td class="dim">2026-09-18 09:03</td><td class="dim">2026-09-27 19:58</td><td><span class="sw on" title="点击禁用" onclick="toggleUser(102)"><i></i></span></td><td class="ops"><button class="mini" onclick="resetPwd(102)">重置密码</button><button class="mini danger" onclick="delUser(102)">删除</button></td></tr><tr><td class="dim">#103</td><td><b>alice@ex.com</b></td><td>Alice</td><td>5</td><td class="dim">2026-09-19 14:27</td><td class="dim">2026-09-27 20:41</td><td><span class="sw on" title="点击禁用" onclick="toggleUser(103)"><i></i></span></td><td class="ops"><button class="mini" onclick="resetPwd(103)">重置密码</button><button class="mini danger" onclick="delUser(103)">删除</button></td></tr><tr><td class="dim">#104</td><td><b>bob@ex.com</b></td><td>Bob</td><td>3</td><td class="dim">2026-09-21 16:44</td><td class="dim">2026-09-27 18:22</td><td><span class="sw on" title="点击禁用" onclick="toggleUser(104)"><i></i></span></td><td class="ops"><button class="mini" onclick="resetPwd(104)">重置密码</button><button class="mini danger" onclick="delUser(104)">删除</button></td></tr><tr><td class="dim">#105</td><td><b>chen@mail.cn</b></td><td>陈叙</td><td>1</td><td class="dim">2026-09-22 11:08</td><td class="dim">2026-09-27 17:30</td><td><span class="sw on" title="点击禁用" onclick="toggleUser(105)"><i></i></span></td><td class="ops"><button class="mini" onclick="resetPwd(105)">重置密码</button><button class="mini danger" onclick="delUser(105)">删除</button></td></tr><tr><td class="dim">#106</td><td><b>grace@mail.cn</b></td><td>Grace</td><td>1</td><td class="dim">2026-09-27 15:12</td><td class="dim">2026-09-27 15:40</td><td><span class="sw on" title="点击禁用" onclick="toggleUser(106)"><i></i></span></td><td class="ops"><button class="mini" onclick="resetPwd(106)">重置密码</button><button class="mini danger" onclick="delUser(106)">删除</button></td></tr><tr><td class="dim">#107</td><td><b>david@ex.com</b></td><td>David</td><td>0</td><td class="dim">2026-09-23 08:51</td><td class="dim">2026-09-25 10:19</td><td><span class="sw " title="点击启用" onclick="toggleUser(107)"><i></i></span></td><td class="ops"><button class="mini" onclick="resetPwd(107)">重置密码</button><button class="mini danger" onclick="delUser(107)">删除</button></td></tr><tr><td class="dim">#108</td><td><b>frank@ex.com</b></td><td>Frank</td><td>2</td><td class="dim">2026-09-24 20:36</td><td class="dim">2026-09-27 20:44</td><td><span class="sw " title="点击启用" onclick="toggleUser(108)"><i></i></span></td><td class="ops"><button class="mini" onclick="resetPwd(108)">重置密码</button><button class="mini danger" onclick="delUser(108)">删除</button></td></tr></tbody>
+          </table></div>
+        </div>
+      </section>
+
+      <!-- 任务管理 -->
+      <section id="view-tasks" class="hidden" data-page-node-id="4ecKbDch7LraxIbE4ySUzj">
+        <div class="view-head" data-page-node-id="YclxiLg38OCiGVstRzYsUr"><h2 data-page-node-id="CZKhAO53KvrC23Z8Fg8WAo">任务管理</h2><p data-page-node-id="aLsI8VJhRPqjuDkMO3oPEA">全部用户的生成任务（展示最近 10 / 累计 138）</p></div>
+        <div class="toolbar" data-page-node-id="6ivS3ERzg5u2QaXEpRwv6L">
+          <div class="chip-row" id="taskChips" data-page-node-id="ETR4wuendG3qdTXULV2QJG"><span class="chip-f on" onclick="setTaskFilter('all')">全部 0</span><span class="chip-f " onclick="setTaskFilter('running')">进行中 3</span><span class="chip-f " onclick="setTaskFilter('done')">已完成 4</span><span class="chip-f " onclick="setTaskFilter('failed')">失败 2</span><span class="chip-f " onclick="setTaskFilter('queued')">排队中 1</span></div>
+          <input id="taskSearch" class="tinput" placeholder="搜索书名 / 用户…" oninput="renderTasks()" style="margin-left:auto" data-page-node-id="nEXr6HWtBP07rE3ZiAFbZR">
+        </div>
+        <div class="panel no-pad" data-page-node-id="t0UQjSaZHmAeosCBJboiQv">
+          <div class="tbl-wrap" data-page-node-id="0839ROh2I9LeYcZ2Z5FRMl"><table class="tbl" data-page-node-id="m2nfLztsxJiw3dZn66AHMX">
+            <thead data-page-node-id="WFV3RxtyOttVA0D3p83sL3"><tr data-page-node-id="UJpEQmpwzQ0zex503ZpCOj"><th data-page-node-id="pinhmAJdIkqzaKpFVqVEzZ">ID</th><th data-page-node-id="YUaH2I4iI8sf8kMGjckQtj">书名</th><th data-page-node-id="I5fN7PiVftofkUzzPHEwQ0">用户</th><th data-page-node-id="cAwcGwEChi4Teg2mhTPmmZ">语言对</th><th data-page-node-id="ZSoGLfu8DJNO6XGZywgi1w">引擎</th><th data-page-node-id="VgANlIgCw8KRByDiIFGAJC">进度</th><th data-page-node-id="JpY8GBt5A1HAt2RDn9HnkO">状态</th><th data-page-node-id="xz5zwxHIrogJMkPRdAcGME">提交时间</th><th style="text-align:right" data-page-node-id="ruL215zs4QXp7M729znUvz">操作</th></tr></thead>
+            <tbody id="taskTbody" data-page-node-id="pBI7l7gs3YqzgOmEvVW4EZ"><tr><td class="dim">#1024</td><td><b>Pride and Prejudice</b></td><td class="dim">demo@book.app</td><td>EN→ZH</td><td class="dim">百度翻译</td><td><span class="mbar g"><i style="width:100%"></i></span>100%</td><td><span class="chip green">已完成</span></td><td class="dim">09-27 21:02</td><td class="ops"><button class="mini" onclick="openTask(1024)">详情</button><button class="mini danger" onclick="delTask(1024)">删除</button></td></tr><tr><td class="dim">#1023</td><td><b>The Great Gatsby</b></td><td class="dim">alice@ex.com</td><td>EN→ZH</td><td class="dim">百度翻译</td><td><span class="mbar "><i style="width:45%"></i></span>45%</td><td><span class="chip blue">翻译中</span></td><td class="dim">09-27 21:18</td><td class="ops"><button class="mini" onclick="openTask(1023)">详情</button><button class="mini" onclick="cancelTask(1023)">取消</button><button class="mini danger" onclick="delTask(1023)">删除</button></td></tr><tr><td class="dim">#1022</td><td><b>1Q84</b></td><td class="dim">alice@ex.com</td><td>JA→ZH</td><td class="dim">有道智云</td><td><span class="mbar "><i style="width:72%"></i></span>72%</td><td><span class="chip blue">翻译中</span></td><td class="dim">09-27 21:05</td><td class="ops"><button class="mini" onclick="openTask(1022)">详情</button><button class="mini" onclick="cancelTask(1022)">取消</button><button class="mini danger" onclick="delTask(1022)">删除</button></td></tr><tr><td class="dim">#1021</td><td><b>The Little Prince</b></td><td class="dim">bob@ex.com</td><td>FR→ZH</td><td class="dim">百度翻译</td><td><span class="mbar "><i style="width:92%"></i></span>92%</td><td><span class="chip violet">排版生成中</span></td><td class="dim">09-27 20:48</td><td class="ops"><button class="mini" onclick="openTask(1021)">详情</button><button class="mini" onclick="cancelTask(1021)">取消</button><button class="mini danger" onclick="delTask(1021)">删除</button></td></tr><tr><td class="dim">#1020</td><td><b>Harry Potter and the Sorcerer’s Stone</b></td><td class="dim">erin@mail.cn</td><td>EN→ZH</td><td class="dim">百度翻译</td><td><span class="mbar g"><i style="width:100%"></i></span>100%</td><td><span class="chip green">已完成</span></td><td class="dim">09-27 19:32</td><td class="ops"><button class="mini" onclick="openTask(1020)">详情</button><button class="mini danger" onclick="delTask(1020)">删除</button></td></tr><tr><td class="dim">#1019</td><td><b>Sapiens</b></td><td class="dim">erin@mail.cn</td><td>EN→ZH</td><td class="dim">百度翻译</td><td><span class="mbar g"><i style="width:100%"></i></span>100%</td><td><span class="chip green">已完成</span></td><td class="dim">09-27 16:20</td><td class="ops"><button class="mini" onclick="openTask(1019)">详情</button><button class="mini danger" onclick="delTask(1019)">删除</button></td></tr><tr><td class="dim">#1018</td><td><b>Norwegian Wood</b><div class="dim" style="font-size:11.5px;color:var(--warn)">API 429 限流，重试 3 次失败（限流解除后可重试）</div></td><td class="dim">chen@mail.cn</td><td>JA→ZH</td><td class="dim">有道智云</td><td><span class="mbar r"><i style="width:38%"></i></span>38%</td><td><span class="chip red">失败</span></td><td class="dim">09-27 20:41</td><td class="ops"><button class="mini" onclick="openTask(1018)">详情</button><button class="mini" onclick="retryTask(1018)">重试</button><button class="mini danger" onclick="delTask(1018)">删除</button></td></tr><tr><td class="dim">#1017</td><td><b>The Castle（扫描版）</b><div class="dim" style="font-size:11.5px;color:var(--warn)">检测到扫描型 PDF，无法提取文本（2002）</div></td><td class="dim">frank@ex.com</td><td>EN→ZH</td><td class="dim">百度翻译</td><td><span class="mbar r"><i style="width:0%"></i></span>0%</td><td><span class="chip red">失败</span></td><td class="dim">09-27 19:20</td><td class="ops"><button class="mini" onclick="openTask(1017)">详情</button><button class="mini danger" onclick="delTask(1017)">删除</button></td></tr><tr><td class="dim">#1016</td><td><b>Jane Eyre</b></td><td class="dim">demo@book.app</td><td>EN→ZH</td><td class="dim">百度翻译</td><td><span class="mbar g"><i style="width:100%"></i></span>100%</td><td><span class="chip green">已完成</span></td><td class="dim">09-25 22:14</td><td class="ops"><button class="mini" onclick="openTask(1016)">详情</button><button class="mini danger" onclick="delTask(1016)">删除</button></td></tr><tr><td class="dim">#1015</td><td><b>To Kill a Mockingbird</b></td><td class="dim">erin@mail.cn</td><td>EN→ZH</td><td class="dim">百度翻译</td><td><span class="dim">—</span></td><td><span class="chip gray">排队中</span></td><td class="dim">09-27 21:21</td><td class="ops"><button class="mini" onclick="openTask(1015)">详情</button><button class="mini danger" onclick="delTask(1015)">删除</button></td></tr></tbody>
+          </table></div>
+        </div>
+      </section>
+
+      <!-- 翻译缓存 -->
+      <section id="view-cache" class="hidden" data-page-node-id="COfK6WFhltJ6zKkAozbLoY">
+        <div class="view-head" data-page-node-id="u0KntyH9JsJuDOwz0BeoRH"><h2 data-page-node-id="75AlDVtXnM6crZusZw8YWm">翻译缓存</h2><p data-page-node-id="w9nknWr9hJ33YYHbQoWCDJ">相同原文 + 语言对命中即免调 API</p></div>
+        <div class="toolbar" style="margin-bottom:12px" data-page-node-id="CdYh43WVEK0UmdaVVvM0TU"><div class="chip-row" id="cacheStats" data-page-node-id="BgH5SlUzPb9D4ucYDAWkAb"><span class="sp"><b>6</b>缓存条目</span><span class="sp"><b>49</b>累计命中</span><span class="sp"><b>42.6%</b>命中率</span><span class="sp"><b>30 天</b>保留策略</span></div>
+          <button class="mini danger" id="cacheClear" onclick="clearCache()" style="margin-left:auto" data-page-node-id="hoQlbdUhDakP1AHzV2wkOn">🗑 清空全部缓存（6）</button>
+        </div>
+        <div class="toolbar" style="margin-bottom:12px" data-page-node-id="xtlCW4qDjGqYbJZbqk8B3v">
+          <input id="cacheSearch" class="tinput" placeholder="搜索原文 / 哈希 / 语言对…" oninput="renderCache()" data-page-node-id="AkMse8dcEhztbYnuNEhad1">
+        </div>
+        <div class="panel no-pad" data-page-node-id="R4ngVWsCRPgHugUWUOfoTg">
+          <div class="tbl-wrap" data-page-node-id="0Myl0VkNZOPd2YFlj9FMAF"><table class="tbl" style="min-width:720px" data-page-node-id="u8MZjunm0p8IaFH3in8zxs">
+            <thead data-page-node-id="BBpCoYTjWay1zpujLl7T1T"><tr data-page-node-id="cuUq3xwqOZLnUKaGn8Ccqk"><th data-page-node-id="Sc4zoMTiAHrLoz6dIb2Xpm">哈希</th><th data-page-node-id="YxuQdrvlGxE2icarUBKHQm">原文预览</th><th data-page-node-id="kZCjumjlccKLrfaBUAkJD7">语言对</th><th data-page-node-id="MnTFW0idCLa8asL3SG63vj">命中</th><th data-page-node-id="6nfmGhMwxVpTQgUZd6d8og">更新时间</th><th style="text-align:right" data-page-node-id="dEnvZSUKgjvpXioTJC5l4p">操作</th></tr></thead>
+            <tbody id="cacheTbody" data-page-node-id="orI7DBqYguEQlhQXt4r5te"><tr><td class="dim mono">a3f9c2e1</td><td><span class="ell" title="It is a truth universally acknowledged, that a single man in possession of a good fortune, must be in want of a wife.">It is a truth universally acknowledged, that a single man in possession of a good fortune, must be in want of a wife.</span></td><td>EN→ZH</td><td><b>12</b></td><td class="dim">09-27 21:03</td><td class="ops"><button class="mini danger" onclick="delCache('a3f9c2e1')">删除</button></td></tr><tr><td class="dim mono">44e0a9b3</td><td><span class="ell" title="It was the best of times, it was the worst of times, it was the age of wisdom, it was the age of foolishness...">It was the best of times, it was the worst of times, it was the age of wisdom, it was the age of foolishness...</span></td><td>EN→ZH</td><td><b>15</b></td><td class="dim">09-27 19:35</td><td class="ops"><button class="mini danger" onclick="delCache('44e0a9b3')">删除</button></td></tr><tr><td class="dim mono">7b21d8f4</td><td><span class="ell" title="However little known the intentions or feelings of such a man may be, on his first entering a neighbourhood...">However little known the intentions or feelings of such a man may be, on his first entering a neighbourhood...</span></td><td>EN→ZH</td><td><b>8</b></td><td class="dim">09-27 21:03</td><td class="ops"><button class="mini danger" onclick="delCache('7b21d8f4')">删除</button></td></tr><tr><td class="dim mono">9c55f1a2</td><td><span class="ell" title="太阳已经落下，天空染上了一层红晕，风也渐渐停了下来。">太阳已经落下，天空染上了一层红晕，风也渐渐停了下来。</span></td><td>JA→ZH</td><td><b>6</b></td><td class="dim">09-27 21:10</td><td class="ops"><button class="mini danger" onclick="delCache('9c55f1a2')">删除</button></td></tr><tr><td class="dim mono">d81c6e07</td><td><span class="ell" title="Le petit prince vivait seul sur une planète très, très petite, où il n’y avait qu’un volcan...">Le petit prince vivait seul sur une planète très, très petite, où il n’y avait qu’un volcan...</span></td><td>FR→ZH</td><td><b>5</b></td><td class="dim">09-27 20:50</td><td class="ops"><button class="mini danger" onclick="delCache('d81c6e07')">删除</button></td></tr><tr><td class="dim mono">3f77b4c5</td><td><span class="ell" title="To be, or not to be, that is the question: whether ’tis nobler in the mind to suffer the slings...">To be, or not to be, that is the question: whether ’tis nobler in the mind to suffer the slings...</span></td><td>EN→DE</td><td><b>3</b></td><td class="dim">09-26 14:22</td><td class="ops"><button class="mini danger" onclick="delCache('3f77b4c5')">删除</button></td></tr></tbody>
+          </table></div>
+        </div>
+      </section>
+
+      <!-- 引擎管理 -->
+      <section id="view-engines" class="hidden" data-page-node-id="pXsRRknOwkOF4ukddWrNGB">
+        <div class="view-head" data-page-node-id="A13Ac7Y4eX46iWGGHItL0T"><h2 data-page-node-id="Gnc7bJ873UYTfyJOelSxo1">引擎管理</h2><p data-page-node-id="zwbculHqEqgTLShKSACkAW">BYOK 模式：用户使用自己申请的 API Key 接入，平台不提供任何密钥</p></div>
+        <div class="eng-grid" id="engGrid" data-page-node-id="emqKj9kMhUTxGUeyYFdOFH"><div class="eng-card"><div class="eng-head"><div class="eng-tile" style="background:#2563eb">B</div><h4>百度翻译</h4><span class="chip green">启用中</span></div><div class="erow"><span>开放为可用翻译引擎</span><span class="sw on" onclick="toggleEngine('baidu')"><i></i></span></div><div class="esub">用户端需填写的密钥字段（用户自行申请、自行填写，随请求传输，服务端不落地）</div><div class="chip-row" style="margin-bottom:2px"><span class="chip blue mono">App ID</span><span class="chip blue mono">App Key</span></div><div class="qtop"><span>今日平台调用（全部用户）</span><b>1,284 次</b></div><div class="qbar "><i style="width:82%"></i></div><div class="qsub">占平台调用 82% · 今日 18.6万 字符 · 失败率 2.1%（用户密钥 429 / 无效）</div></div><div class="eng-card"><div class="eng-head"><div class="eng-tile" style="background:#0d9488">YD</div><h4>有道智云</h4><span class="chip green">启用中</span></div><div class="erow"><span>开放为可用翻译引擎</span><span class="sw on" onclick="toggleEngine('youdao')"><i></i></span></div><div class="esub">用户端需填写的密钥字段（用户自行申请、自行填写，随请求传输，服务端不落地）</div><div class="chip-row" style="margin-bottom:2px"><span class="chip blue mono">appKey</span><span class="chip blue mono">secretKey</span></div><div class="qtop"><span>今日平台调用（全部用户）</span><b>268 次</b></div><div class="qbar w"><i style="width:17%"></i></div><div class="qsub">占平台调用 17% · 今日 5.2万 字符 · 失败率 5.6%（用户密钥 429 / 无效）</div></div><div class="eng-card off"><div class="eng-head"><div class="eng-tile" style="background:#4f46e5">D</div><h4>DeepL</h4><span class="chip gray">已停用</span></div><div class="erow"><span>开放为可用翻译引擎</span><span class="sw " onclick="toggleEngine('deepl')"><i></i></span></div><div class="esub">用户端需填写的密钥字段（用户自行申请、自行填写，随请求传输，服务端不落地）</div><div class="chip-row" style="margin-bottom:2px"><span class="chip blue mono">API Key</span></div><div class="qtop"><span>今日平台调用（全部用户）</span><b>12 次</b></div><div class="qbar "><i style="width:2%"></i></div><div class="qsub">占平台调用 1% · 今日 4,200 字符 · 失败率 0%（用户密钥 429 / 无效）</div></div></div>
+        <div class="note blue" data-page-node-id="azd14CwRfqraSPhCocPj6S"><b data-page-node-id="nsnDjdhPn22AepdWqMlI6U">说明（BYOK 模式）：</b>平台不提供任何翻译密钥。用户自行在引擎官网申请 API Key 并在用户端填写，密钥随请求传输，服务端仅做有效性校验、即用即弃、不落地入库。因此平台不占用任何免费翻译额度，用户增长不产生额外成本；用户密钥无效或未填写时拒绝生成（3001），单段翻译失败回退保留原文。</div>
+      </section>
+
+      <!-- 积分管理 -->
+      <section id="view-points" class="hidden">
+        <div class="view-head"><h2>积分管理</h2><p>配置签到奖励、积分↔token 兑换比例，手动增减用户积分、批量下发</p></div>
+        <div class="stat-grid" style="margin-bottom:16px">
+          <div class="stat-card c1"><div class="lb">平台总积分</div><div class="v" id="ptsTotal">0</div><div class="d up">已发放（含已消耗）</div></div>
+          <div class="stat-card c2"><div class="lb">用户余额合计</div><div class="v" id="ptsBalanceSum">0</div><div class="d">当前在账积分</div></div>
+          <div class="stat-card c3"><div class="lb">今日签到</div><div class="v" id="ptsCheckinToday">0</div><div class="d up">人次</div></div>
+          <div class="stat-card c4"><div class="lb">兑换比例</div><div class="v" id="ptsRateCard">1:1000</div><div class="d">积分 : tokens</div></div>
+        </div>
+        <div class="panel" style="margin-bottom:16px">
+          <h3>积分规则配置</h3>
+          <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-end">
+            <div class="field" style="margin-bottom:0;flex:1;min-width:200px"><label>每日签到奖励（积分）</label><input id="cfgCheckinReward" type="number" min="0" value="10"></div>
+            <div class="field" style="margin-bottom:0;flex:1;min-width:200px"><label>新用户注册奖励（积分）</label><input id="cfgRegReward" type="number" min="0" value="50"></div>
+            <div class="field" style="margin-bottom:0;flex:1;min-width:200px"><label>1 积分可兑换 token 数</label><input id="cfgTokenPerPoint" type="number" min="1" value="1000"></div>
+            <button class="btn-inline" onclick="savePointCfg()" style="margin-left:0">保存配置</button>
+          </div>
+        </div>
+        <div class="panel" style="margin-bottom:16px">
+          <h3>全体成员批量调整积分</h3>
+          <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end">
+            <div class="field" style="margin-bottom:0;flex:1;min-width:200px"><label>积分数额</label><input id="bulkAmount" type="number" min="1" placeholder="如：100"></div>
+            <div class="field" style="margin-bottom:0;flex:1;min-width:220px"><label>原因（可选）</label><input id="bulkReason" type="text" placeholder="如：节日福利 / 违规扣减"></div>
+            <button class="btn-inline" onclick="bulkGrantPoints()" style="margin-left:0">向全体成员下发</button>
+            <button class="btn-inline warn" onclick="bulkDeductPoints()" style="margin-left:0">向全体成员扣减</button>
+          </div>
+        </div>
+        <div class="panel no-pad">
+          <div style="padding:18px 20px 12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+            <h3 style="margin:0">用户积分明细操作</h3>
+            <div class="field" style="margin-bottom:0;min-width:260px"><input id="ptsUserSearch" type="text" placeholder="搜索用户邮箱 / 昵称查看积分变动" oninput="renderPoints()"></div>
+          </div>
+          <div class="tbl-wrap"><table class="tbl" style="min-width:820px">
+            <thead><tr><th>用户</th><th>当前余额</th><th>积分操作</th><th>操作</th></tr></thead>
+            <tbody id="ptsUserTbody"></tbody>
+          </table></div>
+        </div>
+      </section>
+
+      <!-- API 接入 -->
+      <section id="view-officialapi" class="hidden">
+        <div class="view-head"><h2>API 接入管理</h2><p>配置平台官方翻译 API，供用户消耗积分免费使用</p></div>
+        <div class="panel" style="margin-bottom:16px">
+          <h3>官方 API 配置</h3>
+          <div class="note blue" style="margin-bottom:14px">🔑 <b>官方 API 模式：</b>平台接入自有翻译服务，用户在用户端选择「官方引擎」并消耗积分即可翻译，无需自行申请密钥。此模式下平台承担翻译 API 成本，通过积分体系调控用量。</div>
+          <div class="field"><label>官方 API 密钥（服务端持有，不对外展示）</label><input id="officialApiKey" type="password" value="sk-official-xxxxxxxxxxxxx" placeholder="填写平台官方翻译服务密钥"></div>
+          <div class="field"><label>官方引擎开关</label><div style="display:flex;align-items:center;gap:10px"><span class="sw on" id="officialApiSwitch" onclick="toggleOfficialApi()"><i></i></span><span id="officialApiSwitchLabel" style="font-size:13px;color:var(--sub)">已启用 · 用户端「官方引擎」选项可用</span></div></div>
+          <button class="btn-inline" onclick="saveOfficialApi()" style="margin-left:0">保存配置</button>
+        </div>
+        <div class="panel">
+          <h3>官方 API 用量统计（今日）</h3>
+          <div class="stat-grid" style="margin-bottom:14px">
+            <div class="stat-card c1"><div class="lb">官方 API 调用</div><div class="v">2,847</div><div class="d up">今日</div></div>
+            <div class="stat-card c2"><div class="lb">消耗 tokens</div><div class="v">86.4万</div><div class="d">今日</div></div>
+            <div class="stat-card c3"><div class="lb">用户消耗积分</div><div class="v">864</div><div class="d">今日</div></div>
+            <div class="stat-card c5"><div class="lb">失败率</div><div class="v">0.8%</div><div class="d up">正常</div></div>
+          </div>
+          <div class="note red" style="font-size:12px">💡 成本提示：官方 API 成本由平台承担。当前兑换比例下，1 积分 = <b id="officialRateHint">1000</b> tokens，请根据实际 API 成本合理调整兑换比例以控制支出。</div>
+        </div>
+      </section>
+
+      <!-- 反馈管理 -->
+      <section id="view-feedback" class="hidden">
+        <div class="view-head"><h2>反馈管理</h2><p>阅读用户反馈，可查看用户信息并奖励积分 / 扣分 / 封号处理</p></div>
+        <div class="toolbar" style="margin-bottom:12px">
+          <div class="chip-row" id="fbChips"><span class="chip-f on" onclick="setFbFilter('all')">全部</span><span class="chip-f" onclick="setFbFilter('pending')">待处理</span><span class="chip-f" onclick="setFbFilter('done')">已处理</span></div>
+          <input id="fbSearch" class="tinput" placeholder="搜索反馈内容 / 用户…" oninput="renderFeedbacks()" style="margin-left:auto">
+        </div>
+        <div class="panel no-pad">
+          <div class="tbl-wrap"><table class="tbl" style="min-width:900px">
+            <thead><tr><th>类型</th><th>反馈内容</th><th>用户</th><th>状态</th><th>提交时间</th><th style="text-align:right">操作</th></tr></thead>
+            <tbody id="fbTbody"></tbody>
+          </table></div>
+        </div>
+      </section>
+
+      <!-- 风控中心 -->
+      <section id="view-risk" class="hidden">
+        <div class="view-head"><h2>风控中心</h2><p>监控积分异常消耗，命中规则自动临时封号并通知管理员人工复核</p></div>
+        <div class="panel" style="margin-bottom:16px">
+          <h3>风控触发规则</h3>
+          <div class="note blue" style="margin-bottom:14px">🛡️ <b>触发机制：</b>以下任一条件命中即自动「临时封号」并生成告警，等待管理员复核。封号方式为 <code>users.is_active=0</code>，标记风控原因，区别于手动封号。</div>
+          <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-end">
+            <div class="field" style="margin-bottom:0;flex:1;min-width:200px"><label>单次翻译消耗上限（积分）</label><input id="cfgMaxSingle" type="number" min="1" value="500"></div>
+            <div class="field" style="margin-bottom:0;flex:1;min-width:200px"><label>短时高频阈值（5 分钟内请求次数）</label><input id="cfgMaxFreq" type="number" min="1" value="10"></div>
+            <div class="field" style="margin-bottom:0;flex:1;min-width:200px"><label>单日累计消耗上限（积分）</label><input id="cfgMaxDaily" type="number" min="1" value="2000"></div>
+            <button class="btn-inline" onclick="saveRiskCfg()" style="margin-left:0">保存规则</button>
+          </div>
+        </div>
+        <div class="toolbar" style="margin-bottom:12px">
+          <div class="chip-row" id="riskChips"></div>
+        </div>
+        <div class="panel no-pad">
+          <div class="tbl-wrap"><table class="tbl" style="min-width:980px">
+            <thead><tr><th>用户</th><th>命中规则</th><th>异常详情</th><th>触发时间</th><th>状态</th><th style="text-align:right">操作</th></tr></thead>
+            <tbody id="riskTbody"></tbody>
+          </table></div>
+        </div>
+      </section>
+
+      <!-- 公告管理 -->
+      <section id="view-notices" class="" data-page-node-id="TWqeuNirD4Fi29IJ6ZSL3A">
+        <div class="view-head" data-page-node-id="OG6gocRojMNDTE3EFGYRON"><h2 data-page-node-id="l9dm2UawerBIVCEpp8OtGG">公告管理</h2><p data-page-node-id="AHJkwEmuRewzzXxoBZqRKV">发布的公告立即展示在用户端首页「公告」栏目 · 发布 / 编辑 / 停用 / 删除均留操作日志</p></div>
+        <div class="toolbar" style="margin-bottom:12px" data-page-node-id="YBryoVT6SOhtdsNssdZ5YP">
+          <input id="noticeSearch" class="tinput" placeholder="搜索公告标题 / 内容…" oninput="renderNotices()" data-page-node-id="WEpowNHvDxSA2H5A03dm5s">
+          <button class="btn-inline" onclick="openNoticeForm()" data-page-node-id="L37zHphruVPF4rbLh2ptYC">＋ 发布公告</button>
+        </div>
+        <div class="panel no-pad" data-page-node-id="MtyyWwSLr4sEn93l37DH6U">
+          <div class="tbl-wrap" data-page-node-id="qa3AxtqZEGntERnJcDOZOa"><table class="tbl" style="min-width:760px" data-page-node-id="sFJkzKiQd9pqG8Z7Iead3f">
+            <thead data-page-node-id="7rgyYAJgmsyyY9iTMcNYN2"><tr data-page-node-id="QHHjmWmeZe97v9S0YOHopG"><th data-page-node-id="t7UU1t7MfyPK0aOkW9pofT">标题</th><th data-page-node-id="YZT2Y6Om9durxv2ukmGtpF">类型</th><th data-page-node-id="4vrZaPKYFFHgNaqDARVZMm">状态</th><th data-page-node-id="quusNnbcyc45QUizBXhe60">发布时间</th><th data-page-node-id="Cvfh5lqu7bgixbu2c3wxq3">浏览量</th><th style="text-align:right" data-page-node-id="nHwx2zLKNChJNgDOWezo4M">操作</th></tr></thead>
+            <tbody id="noticeTbody" data-page-node-id="wQcVFt2bSmAN2hLw7lIOeI"><tr><td style="max-width:320px"><b>计划维护：2026-09-28（周日）23:00–24:00 平台整体升级</b></td><td><span class="chip amber">维护通知</span></td><td><span class="sw on" title="停用" onclick="toggleNotice(1)"><i></i></span></td><td class="dim mono" style="white-space:nowrap">2026-09-27 18:30</td><td class="mono" style="white-space:nowrap">486</td><td class="ops" style="text-align:right"><button class="mini" onclick="openNoticeForm(1)">编辑</button><button class="mini danger" onclick="delNotice(1)">删除</button></td></tr><tr><td style="max-width:320px"><b>新功能：PDF 导出支持自定义页面尺寸与页眉页脚</b></td><td><span class="chip blue">版本更新</span></td><td><span class="sw on" title="停用" onclick="toggleNotice(2)"><i></i></span></td><td class="dim mono" style="white-space:nowrap">2026-09-25 10:12</td><td class="mono" style="white-space:nowrap">1,203</td><td class="ops" style="text-align:right"><button class="mini" onclick="openNoticeForm(2)">编辑</button><button class="mini danger" onclick="delNotice(2)">删除</button></td></tr><tr><td style="max-width:320px"><b>安全提示：请妥善保管您的 API Key，平台不保存您的任何密钥</b></td><td><span class="chip green">系统通知</span></td><td><span class="sw on" title="停用" onclick="toggleNotice(3)"><i></i></span></td><td class="dim mono" style="white-space:nowrap">2026-09-20 09:00</td><td class="mono" style="white-space:nowrap">2,210</td><td class="ops" style="text-align:right"><button class="mini" onclick="openNoticeForm(3)">编辑</button><button class="mini danger" onclick="delNotice(3)">删除</button></td></tr><tr style="opacity:.55"><td style="max-width:320px"><b>翻译服务限流说明（高峰时段）</b></td><td><span class="chip amber">维护通知</span></td><td><span class="sw " title="重新启用" onclick="toggleNotice(4)"><i></i></span></td><td class="dim mono" style="white-space:nowrap">2026-09-12 20:15</td><td class="mono" style="white-space:nowrap">980</td><td class="ops" style="text-align:right"><button class="mini" onclick="openNoticeForm(4)">编辑</button><button class="mini danger" onclick="delNotice(4)">删除</button></td></tr></tbody>
+          </table></div>
+        </div>
+      </section>
+
+      <!-- 系统日志 -->
+      <section id="view-logs" class="hidden" data-page-node-id="vxQBMZqI2vIxXBwk5UazGr">
+        <div class="view-head" data-page-node-id="xLKtBKzOvQkvSRs2vFFofn"><h2 data-page-node-id="ZUJr8P3aubog6HI9OaeV6L">系统日志</h2><p data-page-node-id="MyNGbTFrqFJRyKCXnK6JEr">今日操作与异常记录（保留 30 天）</p></div>
+        <div class="toolbar" style="margin-bottom:12px" data-page-node-id="KkmRsTfyDHMih8SxrMVfch">
+          <div class="chip-row" id="logChips" data-page-node-id="Gm9puLdGk3E0GttHjtMzGH"><span class="chip-f on" onclick="setLogFilter('all')">全部</span><span class="chip-f " onclick="setLogFilter('INFO')">INFO</span><span class="chip-f " onclick="setLogFilter('WARN')">WARN</span><span class="chip-f " onclick="setLogFilter('ERROR')">ERROR</span></div>
+          <input id="logSearch" class="tinput" placeholder="搜索内容 / 模块…" oninput="renderLogs()" style="margin-left:auto" data-page-node-id="sJC1dfHI6LcBSnU6JiJHR4">
+        </div>
+        <div class="panel no-pad" data-page-node-id="7eLRFmCMKUdNes7bb4uAmI">
+          <div class="tbl-wrap" data-page-node-id="4hRfpA67qkCCRYlyBBnNzN"><table class="tbl" style="min-width:720px" data-page-node-id="TbbrJMQmx1fKIGgBxUiEzu">
+            <thead data-page-node-id="QCu5DH9EuZ0SXW37q0liC9"><tr data-page-node-id="XMZkg76kJIgNLrjXiMJBSZ"><th data-page-node-id="3guy1lsKGowAbmA5QCj9U3">时间</th><th data-page-node-id="qkOLBZw3L6vXkJAlXPmBMi">级别</th><th data-page-node-id="zqtWkGcrH6AeUctYhvNwDH">模块</th><th data-page-node-id="6M8iIKTgcSb1bTRrfEwFhB">内容</th></tr></thead>
+            <tbody id="logTbody" data-page-node-id="E7EO8JEsczuJoYqyStJB0C"><tr><td class="dim mono" style="white-space:nowrap">09-27 21:21:07</td><td><span class="chip blue">INFO</span></td><td><span class="chip gray">task</span></td><td>任务 1015 入队（To Kill a Mockingbird · erin@mail.cn）</td></tr><tr><td class="dim mono" style="white-space:nowrap">09-27 21:05:12</td><td><span class="chip blue">INFO</span></td><td><span class="chip gray">translate</span></td><td>书籍 1024 翻译完成：96 段，缓存命中 12 段，失败 0 段</td></tr><tr><td class="dim mono" style="white-space:nowrap">09-27 21:02:30</td><td><span class="chip blue">INFO</span></td><td><span class="chip gray">upload</span></td><td>demo@book.app 上传 Pride and Prejudice.epub（1.8MB）</td></tr><tr><td class="dim mono" style="white-space:nowrap">09-27 20:47:08</td><td><span class="chip amber">WARN</span></td><td><span class="chip gray">translate</span></td><td>有道 API 限流（429），指数退避重试 2/3</td></tr><tr><td class="dim mono" style="white-space:nowrap">09-27 20:44:51</td><td><span class="chip red">ERROR</span></td><td><span class="chip gray">engine</span></td><td>用户 frank@ex.com 提供的百度 AppKey 校验失败，已拒绝生成请求（3001）</td></tr><tr><td class="dim mono" style="white-space:nowrap">09-27 20:31:19</td><td><span class="chip blue">INFO</span></td><td><span class="chip gray">cache</span></td><td>定时清理缓存完成：过期 14 条（保留策略 30 天）</td></tr><tr><td class="dim mono" style="white-space:nowrap">09-27 19:58:44</td><td><span class="chip blue">INFO</span></td><td><span class="chip gray">auth</span></td><td>erin@mail.cn 登录成功（IP 112.8.34.102）</td></tr><tr><td class="dim mono" style="white-space:nowrap">09-27 19:20:03</td><td><span class="chip red">ERROR</span></td><td><span class="chip gray">upload</span></td><td>上传被拒绝：检测到扫描型 PDF 无法提取文本（2002）The_Castle.pdf</td></tr><tr><td class="dim mono" style="white-space:nowrap">09-27 18:12:36</td><td><span class="chip blue">INFO</span></td><td><span class="chip gray">engine</span></td><td>用户 chen@mail.cn 自申请百度密钥校验通过，任务入队（BYOK）</td></tr><tr><td class="dim mono" style="white-space:nowrap">09-27 17:45:59</td><td><span class="chip amber">WARN</span></td><td><span class="chip gray">engine</span></td><td>百度引擎今日调用失败率 2.1%（多为用户密钥 429 限流），平台无额度风险</td></tr><tr><td class="dim mono" style="white-space:nowrap">09-27 16:30:22</td><td><span class="chip blue">INFO</span></td><td><span class="chip gray">export</span></td><td>书籍 1020 导出 EPUB 成功（2.1MB）</td></tr><tr><td class="dim mono" style="white-space:nowrap">09-27 15:12:48</td><td><span class="chip blue">INFO</span></td><td><span class="chip gray">auth</span></td><td>新用户注册：grace@mail.cn</td></tr><tr><td class="dim mono" style="white-space:nowrap">09-27 00:00:05</td><td><span class="chip blue">INFO</span></td><td><span class="chip gray">system</span></td><td>每日重置：引擎调用统计计数器已初始化</td></tr></tbody>
+          </table></div>
+        </div>
+      </section>
+
+      <div class="ad-foot" data-page-node-id="9VVsQidJtNSjCLdY2Oiqd7">双语书工厂 · 管理控制台原型 v1.1（新增公告管理）· 2026-09-27 · 数据为 Mock 演示数据，仅用于展示交互流程</div>
+    </main>
+  </div>
+</div>
+
+<!-- 弹窗 -->
+<div id="modalMask" class="modal-mask hidden" onclick="if(event.target===this)closeModal()" data-page-node-id="7cOd3DOLEFHmKU00FqYCux">
+  <div class="modal" data-page-node-id="P8IvhYw4or5s8fJDkHo9bx">
+    <div class="modal-head" data-page-node-id="7RxZ1AktkGMZqE12jL4NHv"><h3 id="modalTitle" data-page-node-id="hsF4h49VkLLAFtmiW11e5V">发布公告</h3></div>
+    <div class="modal-body" id="modalBody" data-page-node-id="yKhUYrult2FGqE4AENBLSf"><p class="dim" style="padding:12px 0">占位内容：弹窗打开时由系统自动填充</p></div>
+    <div class="modal-foot" id="modalFoot" data-page-node-id="eSACHkDkPgiVDLpXC0beDK"><button class="btn ghost" onclick="closeModal()">取消</button></div>
+  </div>
+</div>
+
+<script>
+const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){localStorage.setItem(k,JSON.stringify(v))},del(k){localStorage.removeItem(k)}};
+const $=id=>document.getElementById(id);
+const fmt=n=>n>=10000?(n/10000).toFixed(1)+'万':n.toLocaleString();
+const nowStr=()=>{const d=new Date(),p=x=>String(x).padStart(2,'0');return p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds())};
+
+/* ---------- 通用 ---------- */
+function toast(msg,ms=2400){const t=document.createElement('div');t.className='toast';t.textContent=msg;$('toasts').appendChild(t);setTimeout(()=>{t.style.transition='opacity .3s';t.style.opacity='0';setTimeout(()=>t.remove(),320)},ms)}
+function openModal(title,body,actions){
+  $('modalTitle').textContent=title;$('modalBody').innerHTML=body;
+  const f=$('modalFoot');f.innerHTML='';
+  (actions||[]).forEach(a=>{const b=document.createElement('button');b.className='btn '+(a.cls||'');b.textContent=a.label;b.onclick=a.fn;f.appendChild(b)});
+  $('modalMask').classList.remove('hidden');
+}
+function closeModal(){$('modalMask').classList.add('hidden')}
+function confirmModal(title,desc,fn,danger=true){
+  openModal(title,'<p style="line-height:1.8">'+desc+'</p>',[
+    {label:'取消',cls:'ghost',fn:closeModal},
+    {label:danger?'确认删除':'确认执行',cls:danger?'danger':'',fn:()=>{closeModal();fn()}}
+  ]);
+}
+function addLog(lv,mod,msg){LOGS.unshift({t:nowStr(),lv,mod,msg});if(logFilter==='all'||logFilter===lv)renderLogs()}
+window.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+
+/* ---------- 登录 ---------- */
+function adFill(){$('adEmail').value='admin@book.app';$('adPwd').value='admin123';$('adPwdErr').textContent=''}
+function adLogin(){
+  const em=$('adEmail').value.trim(),pw=$('adPwd').value;
+  let msg='';
+  if(!em)msg='请输入管理员邮箱';
+  else if(!pw)msg='请输入密码';
+  else if(em!=='admin@book.app'||pw!=='admin123')msg='邮箱或密码不正确（演示账号：admin@book.app / admin123）';
+  if(msg){
+    $('adPwdErr').textContent=msg;
+    const f=$('adLoginForm');f.classList.remove('shake');void f.offsetWidth;f.classList.add('shake');return;
+  }
+  store.set('bes_admin_session',{email:'admin@book.app',at:Date.now()});
+  enterAdmin();
+}
+function enterAdmin(){$('screen-admin-auth').classList.add('hidden');$('screen-admin').classList.remove('hidden')}
+function adLogout(){store.del('bes_admin_session');location.reload()}
+function nav(v){
+  document.querySelectorAll('.ad-nav-item').forEach(n=>n.classList.toggle('on',n.dataset.v===v));
+  document.querySelectorAll('.ad-main>section').forEach(s=>s.classList.add('hidden'));
+  $('view-'+v).classList.remove('hidden');
+}
+
+/* ---------- Mock 数据 ---------- */
+const USERS=[
+  {id:101,email:'demo@book.app',name:'演示用户',status:'active',books:2,points:128,reg:'2026-09-20 10:12',last:'2026-09-27 21:40'},
+  {id:102,email:'erin@mail.cn',name:'Erin',status:'active',books:7,points:320,reg:'2026-09-18 09:03',last:'2026-09-27 19:58'},
+  {id:103,email:'alice@ex.com',name:'Alice',status:'active',books:5,points:86,reg:'2026-09-19 14:27',last:'2026-09-27 20:41'},
+  {id:104,email:'bob@ex.com',name:'Bob',status:'active',books:3,points:150,reg:'2026-09-21 16:44',last:'2026-09-27 18:22'},
+  {id:105,email:'chen@mail.cn',name:'陈叙',status:'active',books:1,points:42,reg:'2026-09-22 11:08',last:'2026-09-27 17:30'},
+  {id:106,email:'grace@mail.cn',name:'Grace',status:'active',books:1,points:60,reg:'2026-09-27 15:12',last:'2026-09-27 15:40'},
+  {id:107,email:'david@ex.com',name:'David',status:'disabled',books:0,points:0,reg:'2026-09-23 08:51',last:'2026-09-25 10:19'},
+  {id:108,email:'frank@ex.com',name:'Frank',status:'disabled',books:2,points:-20,reg:'2026-09-24 20:36',last:'2026-09-27 20:44'}
+];
+const TASKS=[
+  {id:1024,title:'Pride and Prejudice',user:'demo@book.app',pair:'EN→ZH',engine:'百度翻译',status:'done',progress:100,chars:128400,segs:96,created:'09-27 21:02',reason:''},
+  {id:1023,title:'The Great Gatsby',user:'alice@ex.com',pair:'EN→ZH',engine:'百度翻译',status:'translating',progress:45,chars:96200,segs:74,created:'09-27 21:18',reason:''},
+  {id:1022,title:'1Q84',user:'alice@ex.com',pair:'JA→ZH',engine:'有道智云',status:'translating',progress:72,chars:152000,segs:128,created:'09-27 21:05',reason:''},
+  {id:1021,title:'The Little Prince',user:'bob@ex.com',pair:'FR→ZH',engine:'百度翻译',status:'generating',progress:92,chars:48600,segs:41,created:'09-27 20:48',reason:''},
+  {id:1020,title:'Harry Potter and the Sorcerer\u2019s Stone',user:'erin@mail.cn',pair:'EN→ZH',engine:'百度翻译',status:'done',progress:100,chars:210500,segs:183,created:'09-27 19:32',reason:''},
+  {id:1019,title:'Sapiens',user:'erin@mail.cn',pair:'EN→ZH',engine:'百度翻译',status:'done',progress:100,chars:286000,segs:254,created:'09-27 16:20',reason:''},
+  {id:1018,title:'Norwegian Wood',user:'chen@mail.cn',pair:'JA→ZH',engine:'有道智云',status:'failed',progress:38,chars:143000,segs:121,created:'09-27 20:41',reason:'API 429 限流，重试 3 次失败（限流解除后可重试）'},
+  {id:1017,title:'The Castle（扫描版）',user:'frank@ex.com',pair:'EN→ZH',engine:'百度翻译',status:'failed',progress:0,chars:0,segs:0,created:'09-27 19:20',reason:'检测到扫描型 PDF，无法提取文本（2002）'},
+  {id:1016,title:'Jane Eyre',user:'demo@book.app',pair:'EN→ZH',engine:'百度翻译',status:'done',progress:100,chars:174800,segs:152,created:'09-25 22:14',reason:''},
+  {id:1015,title:'To Kill a Mockingbird',user:'erin@mail.cn',pair:'EN→ZH',engine:'百度翻译',status:'queued',progress:0,chars:0,segs:0,created:'09-27 21:21',reason:''}
+];
+const CACHE=[
+  {hash:'a3f9c2e1',text:'It is a truth universally acknowledged, that a single man in possession of a good fortune, must be in want of a wife.',pair:'EN→ZH',hits:12,upd:'09-27 21:03'},
+  {hash:'44e0a9b3',text:'It was the best of times, it was the worst of times, it was the age of wisdom, it was the age of foolishness...',pair:'EN→ZH',hits:15,upd:'09-27 19:35'},
+  {hash:'7b21d8f4',text:'However little known the intentions or feelings of such a man may be, on his first entering a neighbourhood...',pair:'EN→ZH',hits:8,upd:'09-27 21:03'},
+  {hash:'9c55f1a2',text:'太阳已经落下，天空染上了一层红晕，风也渐渐停了下来。',pair:'JA→ZH',hits:6,upd:'09-27 21:10'},
+  {hash:'d81c6e07',text:'Le petit prince vivait seul sur une planète très, très petite, où il n\u2019y avait qu\u2019un volcan...',pair:'FR→ZH',hits:5,upd:'09-27 20:50'},
+  {hash:'3f77b4c5',text:'To be, or not to be, that is the question: whether \u2019tis nobler in the mind to suffer the slings...',pair:'EN→DE',hits:3,upd:'09-26 14:22'}
+];
+const ENGINES=[
+  {id:'baidu',name:'百度翻译',tile:'B',color:'#2563eb',enabled:true,keyFields:['App ID','App Key'],stats:{calls:1284,chars:186400,failRate:2.1}},
+  {id:'youdao',name:'有道智云',tile:'YD',color:'#0d9488',enabled:true,keyFields:['appKey','secretKey'],stats:{calls:268,chars:52300,failRate:5.6}},
+  {id:'deepl',name:'DeepL',tile:'D',color:'#4f46e5',enabled:false,keyFields:['API Key'],stats:{calls:12,chars:4200,failRate:0}}
+];
+const LOGS=[
+  {t:'09-27 21:21:07',lv:'INFO',mod:'task',msg:'任务 1015 入队（To Kill a Mockingbird · erin@mail.cn）'},
+  {t:'09-27 21:05:12',lv:'INFO',mod:'translate',msg:'书籍 1024 翻译完成：96 段，缓存命中 12 段，失败 0 段'},
+  {t:'09-27 21:02:30',lv:'INFO',mod:'upload',msg:'demo@book.app 上传 Pride and Prejudice.epub（1.8MB）'},
+  {t:'09-27 20:47:08',lv:'WARN',mod:'translate',msg:'有道 API 限流（429），指数退避重试 2/3'},
+  {t:'09-27 20:44:51',lv:'ERROR',mod:'engine',msg:'用户 frank@ex.com 提供的百度 AppKey 校验失败，已拒绝生成请求（3001）'},
+  {t:'09-27 20:31:19',lv:'INFO',mod:'cache',msg:'定时清理缓存完成：过期 14 条（保留策略 30 天）'},
+  {t:'09-27 19:58:44',lv:'INFO',mod:'auth',msg:'erin@mail.cn 登录成功（IP 112.8.34.102）'},
+  {t:'09-27 19:20:03',lv:'ERROR',mod:'upload',msg:'上传被拒绝：检测到扫描型 PDF 无法提取文本（2002）The_Castle.pdf'},
+  {t:'09-27 18:12:36',lv:'INFO',mod:'engine',msg:'用户 chen@mail.cn 自申请百度密钥校验通过，任务入队（BYOK）'},
+  {t:'09-27 17:45:59',lv:'WARN',mod:'engine',msg:'百度引擎今日调用失败率 2.1%（多为用户密钥 429 限流），平台无额度风险'},
+  {t:'09-27 16:30:22',lv:'INFO',mod:'export',msg:'书籍 1020 导出 EPUB 成功（2.1MB）'},
+  {t:'09-27 15:12:48',lv:'INFO',mod:'auth',msg:'新用户注册：grace@mail.cn'},
+  {t:'09-27 00:00:05',lv:'INFO',mod:'system',msg:'每日重置：引擎调用统计计数器已初始化'}
+];
+const ST={queued:{t:'排队中',c:'gray'},parsing:{t:'解析中',c:'blue'},translating:{t:'翻译中',c:'blue'},generating:{t:'排版生成中',c:'violet'},done:{t:'已完成',c:'green'},failed:{t:'失败',c:'red'},cancelled:{t:'已取消',c:'gray'}};
+const RUNNING=['parsing','translating','generating'];
+let taskFilter='all',logFilter='all';
+
+/* ---------- 概览 ---------- */
+function renderDash(){
+  const d=new Date(),p=x=>String(x).padStart(2,'0');
+  $('dashDate').textContent='今天是 '+p(d.getMonth()+1)+'-'+p(d.getDate())+' · 服务运行中 v1.1.0';
+  const running=TASKS.filter(t=>RUNNING.includes(t.status)).length;
+  const queued=TASKS.filter(t=>t.status==='queued').length;
+  const sc=(lb,v,dx,dc,c)=>'<div class="stat-card '+c+'"><div class="lb">'+lb+'</div><div class="v">'+v+'</div><div class="d '+dc+'">'+dx+'</div></div>';
+  $('statGrid').innerHTML=
+    sc('注册用户',USERS.length,'6 正常 · 今日新增 1','up','c1')+
+    sc('累计书籍','138','今日 +5','up','c2')+
+    sc('进行中任务',running,'另有排队 '+queued+' 个','warn','c3')+
+    sc('今日翻译量','18.6万 字符','缓存命中 42% · 节省 API 调用','up','c4')+
+    sc('缓存命中率','42.6%','累计命中 1,284 次','up','c5');
+  const data=[['09-21',4],['09-22',7],['09-23',5],['09-24',9],['09-25',12],['09-26',8],['09-27',13]];
+  const max=Math.max.apply(null,data.map(x=>x[1]));
+  $('chart').innerHTML=data.map((x,i)=>{
+    const h=Math.round(14+x[1]/max*118);
+    const last=i===data.length-1;
+    return '<div class="col'+(last?' today':'')+'"><span>'+x[1]+'</span><i style="height:'+h+'px"></i><b>'+x[0].slice(3)+'</b></div>';
+  }).join('');
+  const totCalls=ENGINES.reduce((s,e)=>s+e.stats.calls,0);
+  $('dashQuota').innerHTML=ENGINES.map(e=>{
+    const share=Math.round(e.stats.calls/totCalls*100);
+    const cls=e.stats.failRate>=8?'r':e.stats.failRate>=4?'w':'';
+    return '<div class="qitem"><div class="qt"><span><span class="eng-dot" style="background:'+e.color+'"></span>'+e.name+(e.enabled?'':' <span class="chip gray">已停用</span>')+'</span><b>'+e.stats.calls.toLocaleString()+' 次</b></div>'+
+      '<div class="qbar '+cls+'"><i style="width:'+Math.max(share,2)+'%"></i></div>'+
+      '<div class="qsub">占平台调用 '+share+'% · 今日 '+fmt(e.stats.chars)+' 字符 · 失败率 '+e.stats.failRate+'%</div></div>';
+  }).join('');
+  $('dashTasks').innerHTML=TASKS.slice(0,5).map(t=>{
+    const st=ST[t.status];
+    return '<tr class="click" onclick="nav(\'tasks\');openTask('+t.id+')"><td class="dim">#'+t.id+'</td><td><b>'+t.title+'</b></td><td class="dim">'+t.user+'</td><td>'+t.pair+'</td><td><span class="chip '+st.c+'">'+st.t+'</span></td><td class="dim">'+t.created+'</td></tr>';
+  }).join('');
+}
+
+/* ---------- 用户管理 ---------- */
+function renderUsers(){
+  const q=($('userSearch').value||'').trim().toLowerCase();
+  const list=USERS.filter(u=>!q||u.email.toLowerCase().includes(q)||u.name.toLowerCase().includes(q));
+  $('userTbody').innerHTML=list.map(u=>'<tr>'+
+    '<td class="dim">#'+u.id+'</td>'+
+    '<td><b>'+u.email+'</b></td>'+
+    '<td>'+u.name+'</td>'+
+    '<td>'+u.books+'</td>'+
+    '<td><b style="color:'+(u.points<0?'var(--err)':'inherit')+'">'+u.points+'</b></td>'+
+    '<td class="dim">'+u.reg+'</td>'+
+    '<td class="dim">'+u.last+'</td>'+
+    '<td><span class="sw '+(u.status==='active'?'on':'')+'" title="'+(u.status==='active'?'点击禁用':'点击启用')+'" onclick="toggleUser('+u.id+')"><i></i></span></td>'+
+    '<td class="ops"><button class="mini" onclick="openPtsUser('+u.id+')">积分</button><button class="mini" onclick="resetPwd('+u.id+')">重置密码</button><button class="mini danger" onclick="delUser('+u.id+')">删除</button></td>'+
+  '</tr>').join('')||'<tr><td colspan="9" class="empty">未找到匹配用户</td></tr>';
+  const active=USERS.filter(u=>u.status==='active').length;
+  $('userCount').textContent=USERS.length;
+  $('userActive').textContent=active;
+  $('userOff').textContent=USERS.length-active;
+  $('userFilterStat').textContent=q?('匹配 '+list.length+' / '+USERS.length):'';
+}
+function toggleUser(id){
+  const u=USERS.find(x=>x.id===id);
+  u.status=u.status==='active'?'disabled':'active';
+  addLog('INFO','user','管理员'+(u.status==='active'?'启用':'禁用')+'用户 '+u.email);
+  renderUsers();
+  toast(u.status==='active'?'已启用用户：'+u.email:'已禁用用户：'+u.email+'（其登录将被拒绝）');
+}
+function resetPwd(id){
+  const u=USERS.find(x=>x.id===id);
+  const pwd='Bk'+Math.random().toString(36).slice(2,8);
+  openModal('重置密码','<p style="margin-bottom:12px">将重置用户 <b>'+u.email+'</b> 的密码。重置后该用户需使用新密码登录。</p>'+
+    '<div class="krow"><span class="kl">新密码</span><span class="kv">'+pwd+'</span><button title="复制" onclick="toast(\'已复制：'+pwd+'\')">📋</button></div>'+
+    '<p class="dim" style="font-size:12px;margin-top:8px">* 原型演示：实际实现通过邮件发送重置链接（send_reset_link）</p>',
+    [{label:'取消',cls:'ghost',fn:closeModal},{label:'确认重置',fn:()=>{closeModal();addLog('WARN','auth','管理员重置用户 '+u.email+' 的密码');toast('已重置 '+u.email+' 的密码')}}]);
+}
+function delUser(id){
+  const u=USERS.find(x=>x.id===id);
+  confirmModal('删除用户','确认删除用户 <b>'+u.email+'</b> 及其 <b>'+u.books+'</b> 本已生成书籍与翻译记录？<br><b style="color:var(--err)">此操作不可恢复。</b>',()=>{
+    USERS.splice(USERS.indexOf(u),1);
+    addLog('ERROR','user','管理员删除用户 '+u.email);
+    renderUsers();renderDash();
+    toast('用户已删除');
+  });
+}
+
+/* ---------- 任务管理 ---------- */
+function setTaskFilter(f){taskFilter=f;renderTasks()}
+function countT(f){
+  if(f==='all')return TASKS.length;
+  if(f==='running')return TASKS.filter(t=>RUNNING.includes(t.status)).length;
+  return TASKS.filter(t=>t.status===f).length;
+}
+function renderTasks(){
+  const defs=[['all','全部'],['running','进行中'],['done','已完成'],['failed','失败'],['queued','排队中'],['cancelled','已取消']];
+  $('taskChips').innerHTML=defs.filter(d=>d[0]==='all'||countT(d[0])>0||taskFilter===d[0]).map(d=>'<span class="chip-f '+(taskFilter===d[0]?'on':'')+'" onclick="setTaskFilter(\''+d[0]+'\')">'+d[1]+' '+countT(d[0])+'</span>').join('');
+  const q=($('taskSearch').value||'').trim().toLowerCase();
+  const list=TASKS.filter(t=>{
+    if(taskFilter==='running')return RUNNING.includes(t.status);
+    if(taskFilter!=='all'&&taskFilter!==t.status)return false;
+    return !q||t.title.toLowerCase().includes(q)||t.user.toLowerCase().includes(q);
+  });
+  $('taskTbody').innerHTML=list.map(t=>{
+    const st=ST[t.status];
+    const run=RUNNING.includes(t.status);
+    const barCls=t.status==='done'?'g':(t.status==='failed'?'r':'');
+    return '<tr>'+
+      '<td class="dim">#'+t.id+'</td>'+
+      '<td><b>'+t.title+'</b>'+(t.reason?'<div class="dim" style="font-size:11.5px;color:var(--warn)">'+t.reason+'</div>':'')+'</td>'+
+      '<td class="dim">'+t.user+'</td>'+
+      '<td>'+t.pair+'</td>'+
+      '<td class="dim">'+t.engine+'</td>'+
+      '<td>'+(t.status==='queued'?'<span class="dim">—</span>':'<span class="mbar '+barCls+'"><i style="width:'+t.progress+'%"></i></span>'+t.progress+'%')+'</td>'+
+      '<td><span class="chip '+st.c+'">'+st.t+'</span></td>'+
+      '<td class="dim">'+t.created+'</td>'+
+      '<td class="ops"><button class="mini" onclick="openTask('+t.id+')">详情</button>'+
+        (run?'<button class="mini" onclick="cancelTask('+t.id+')">取消</button>':'')+
+        (t.status==='failed'&&t.segs>0?'<button class="mini" onclick="retryTask('+t.id+')">重试</button>':'')+
+        '<button class="mini danger" onclick="delTask('+t.id+')">删除</button></td>'+
+    '</tr>';
+  }).join('')||'<tr><td colspan="9" class="empty">暂无任务</td></tr>';
+}
+const SEGS=[
+  {s:'It is a truth universally acknowledged, that a single man in possession of a good fortune, must be in want of a wife.',t:'凡是有钱的单身汉，总想娶位太太，这已经成了一条举世公认的真理。',failed:false},
+  {s:'However little known the intentions or feelings of such a man may be, on his first entering a neighbourhood.',t:'这样一个人初次走进一个地方，无论他的意图和感情有多不为人所知。',failed:false},
+  {s:'This maxim has long remained the secret of the family, and no one dares to question it.',t:'This maxim has long remained the secret of the family, and no one dares to question it.',failed:true}
+];
+function openTask(id){
+  const t=TASKS.find(x=>x.id===id);if(!t)return;
+  const st=ST[t.status];
+  const run=RUNNING.includes(t.status);
+  const body=
+    '<div class="tmeta">'+
+      '<div><span>用户</span><b>'+t.user+'</b></div>'+
+      '<div><span>语言对</span><b>'+t.pair+'</b></div>'+
+      '<div><span>翻译引擎</span><b>'+t.engine+'</b></div>'+
+      '<div><span>提交时间</span><b>'+t.created+'</b></div>'+
+      '<div><span>字符 / 段落</span><b>'+fmt(t.chars)+' / '+t.segs+'</b></div>'+
+      '<div><span>状态</span><b><span class="chip '+st.c+'">'+st.t+'</span></b></div>'+
+    '</div>'+
+    (t.reason?'<div class="note red" style="margin-bottom:12px">⚠️ '+t.reason+'</div>':'')+
+    '<div class="tprog"><div class="bar"><i style="width:'+t.progress+'%"></i></div><div class="bar-label"><span>'+('翻译进度（解析 → 分句 → 翻译 → 排版导出）')+'</span><span>'+t.progress+'%</span></div></div>'+
+    '<h4 style="font-size:13.5px;margin:16px 0 8px">双语效果预览（第 3 / '+Math.max(t.segs,1)+' 段）</h4>'+
+    SEGS.map(s=>'<div class="seg'+(s.failed?' failed':'')+'"><div class="s">'+s.s+'</div><div class="t">'+(s.failed?'<span class="flag">⚠ 翻译失败 · 保留原文</span>':s.t)+'</div></div>').join('')+
+    '<p class="dim" style="font-size:11.5px">* 原型演示：预览为示例内容，实际读取 segments 表（含失败回退标记）</p>';
+  openModal('任务 #'+t.id+' · '+t.title,body,[
+    {label:'下载 EPUB（演示）',cls:'ghost',fn:()=>toast('原型演示：实际实现调用 GET /api/books/'+t.id+'/export?format=epub',3000)},
+    run?{label:'取消任务',cls:'danger',fn:()=>{t.status='cancelled';t.reason='管理员取消';closeModal();renderTasks();renderDash();addLog('WARN','task','管理员取消任务 #'+t.id);toast('任务已取消')}}
+      :{label:'关闭',cls:'ghost',fn:closeModal}
+  ]);
+}
+function cancelTask(id){
+  const t=TASKS.find(x=>x.id===id);
+  confirmModal('取消任务','确认取消任务 <b>#'+t.id+'</b>（'+t.title+'）？当前已翻译的进度将不保存，该用户需重新提交。',()=>{
+    t.status='cancelled';t.reason='管理员取消';
+    renderTasks();renderDash();
+    addLog('WARN','task','管理员取消任务 #'+t.id);
+    toast('任务 #'+t.id+' 已取消');
+  },false);
+}
+function retryTask(id){
+  const t=TASKS.find(x=>x.id===id);
+  t.status='queued';t.progress=0;t.reason='';
+  renderTasks();renderDash();
+  addLog('INFO','task','管理员重试任务 #'+t.id+'，已重新入队');
+  toast('任务 #'+t.id+' 已重新入队');
+}
+function delTask(id){
+  const t=TASKS.find(x=>x.id===id);
+  confirmModal('删除任务','确认删除任务 <b>#'+t.id+'</b>（'+t.title+'）及其产物文件？<br><b style="color:var(--err)">此操作不可恢复。</b>',()=>{
+    TASKS.splice(TASKS.indexOf(t),1);
+    renderTasks();renderDash();
+    addLog('ERROR','task','管理员删除任务 #'+t.id);
+    toast('任务已删除');
+  });
+}
+
+/* ---------- 翻译缓存 ---------- */
+function renderCache(){
+  const q=($('cacheSearch').value||'').trim().toLowerCase();
+  const list=CACHE.filter(c=>!q||c.text.toLowerCase().includes(q)||c.hash.includes(q)||c.pair.toLowerCase().includes(q));
+  const hits=CACHE.reduce((s,c)=>s+c.hits,0);
+  const sp=(l,v)=>'<span class="sp"><b>'+v+'</b>'+l+'</span>';
+  $('cacheStats').innerHTML=sp('缓存条目',CACHE.length)+sp('累计命中',hits.toLocaleString())+sp('命中率','42.6%')+sp('保留策略','30 天');
+  $('cacheClear').textContent='🗑 清空全部缓存（'+CACHE.length+'）';
+  $('cacheTbody').innerHTML=list.map(c=>'<tr>'+
+    '<td class="dim mono">'+c.hash+'</td>'+
+    '<td><span class="ell" title="'+c.text.replace(/"/g,'&quot;')+'">'+c.text+'</span></td>'+
+    '<td>'+c.pair+'</td>'+
+    '<td><b>'+c.hits+'</b></td>'+
+    '<td class="dim">'+c.upd+'</td>'+
+    '<td class="ops"><button class="mini danger" onclick="delCache(\''+c.hash+'\')">删除</button></td>'+
+  '</tr>').join('')||'<tr><td colspan="6" class="empty">未找到匹配缓存</td></tr>';
+}
+function delCache(hash){
+  const i=CACHE.findIndex(c=>c.hash===hash);
+  CACHE.splice(i,1);
+  renderCache();
+  addLog('INFO','cache','管理员删除缓存 '+hash);
+  toast('缓存已删除：'+hash);
+}
+function clearCache(){
+  confirmModal('清空翻译缓存','确认清空全部 <b>'+CACHE.length+'</b> 条缓存？清空后相同内容将重新调用翻译 API，消耗用户自有密钥的额度。',()=>{
+    CACHE.length=0;
+    renderCache();
+    addLog('WARN','cache','管理员清空全部翻译缓存');
+    toast('缓存已全部清空');
+  });
+}
+
+/* ---------- 引擎管理 ---------- */
+function renderEngines(){
+  const totCalls=ENGINES.reduce((s,e)=>s+e.stats.calls,0);
+  $('engGrid').innerHTML=ENGINES.map(e=>{
+    const share=Math.round(e.stats.calls/totCalls*100);
+    const cls=e.stats.failRate>=8?'r':e.stats.failRate>=4?'w':'';
+    return '<div class="eng-card'+(e.enabled?'':' off')+'">'+
+      '<div class="eng-head"><div class="eng-tile" style="background:'+e.color+'">'+e.tile+'</div><h4>'+e.name+'</h4><span class="chip '+(e.enabled?'green':'gray')+'">'+(e.enabled?'启用中':'已停用')+'</span></div>'+
+      '<div class="erow"><span>开放为可用翻译引擎</span><span class="sw '+(e.enabled?'on':'')+'" onclick="toggleEngine(\''+e.id+'\')"><i></i></span></div>'+
+      '<div class="esub">用户端需填写的密钥字段（用户自行申请、自行填写，随请求传输，服务端不落地）</div>'+
+      '<div class="chip-row" style="margin-bottom:2px">'+e.keyFields.map(k=>'<span class="chip blue mono">'+k+'</span>').join('')+'</div>'+
+      '<div class="qtop"><span>今日平台调用（全部用户）</span><b>'+e.stats.calls.toLocaleString()+' 次</b></div>'+
+      '<div class="qbar '+cls+'"><i style="width:'+Math.max(share,2)+'%"></i></div>'+
+      '<div class="qsub">占平台调用 '+share+'% · 今日 '+fmt(e.stats.chars)+' 字符 · 失败率 '+e.stats.failRate+'%（用户密钥 429 / 无效）</div>'+
+    '</div>';
+  }).join('');
+}
+function toggleEngine(id){
+  const e=ENGINES.find(x=>x.id===id);
+  e.enabled=!e.enabled;
+  renderEngines();renderDash();
+  addLog('INFO','engine',e.name+(e.enabled?' 已启用':' 已停用'));
+  toast(e.name+(e.enabled?' 已启用，前端下拉框将出现该选项':' 已停用，前端不再展示该引擎'));
+}
+/* ---------- 公告管理 ---------- */
+const NOTICE_TYPES={maintenance:'维护通知',update:'版本更新',system:'系统通知'};
+const NOTICE_CHIP={maintenance:'amber',update:'blue',system:'green'};
+let NOTICES=[
+  {id:1,type:'maintenance',title:'计划维护：2026-09-28（周日）23:00–24:00 平台整体升级',date:'2026-09-27 18:30',views:486,off:false,
+   body:'为提升双语书生成服务的稳定性，平台将于 2026 年 9 月 28 日（周日）23:00 至 24:00 进行整体升级。维护期间文件上传与翻译生成临时不可用，已生成的双语书可正常查看与下载。'},
+  {id:2,type:'update',title:'新功能：PDF 导出支持自定义页面尺寸与页眉页脚',date:'2026-09-25 10:12',views:1203,off:false,
+   body:'双语书导出模块已升级：PDF 导出现支持选择页面尺寸（A5 / A4 / 6 英寸）与自定义页眉页脚文字（书名、页码）。默认排版仍为「逐段上下对照」。'},
+  {id:3,type:'system',title:'安全提示：请妥善保管您的 API Key，平台不保存您的任何密钥',date:'2026-09-20 09:00',views:2210,off:false,
+   body:'本平台采用 BYOK 模式：翻译使用您自行申请的 API Key，密钥仅在本次翻译请求中生效，服务端不存储、不写入日志。请勿将密钥分享给他人。'},
+  {id:4,type:'maintenance',title:'翻译服务限流说明（高峰时段）',date:'2026-09-12 20:15',views:980,off:true,
+   body:'高峰时段翻译队列可能排队延长，429 限流导致失败的任务请在稍后重试。本条公告已停用，仅保留记录。'}
+];
+let noticeSeq=100;
+const typeLabel=t=>NOTICE_TYPES[t]||t;
+function syncNoticeType(){ $('nfCustomWrap').style.display = $('nfType').value==='__custom'?'block':'none'; }
+const fmtNow=()=>{const d=new Date(),p=x=>String(x).padStart(2,'0');return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes())};
+function renderNotices(){
+  const q=($('noticeSearch').value||'').trim().toLowerCase();
+  const list=NOTICES.filter(n=>!q||n.title.toLowerCase().includes(q)||n.body.toLowerCase().includes(q));
+  $('noticeTbody').innerHTML=list.map(n=>
+    '<tr'+(n.off?' style="opacity:.55"':'')+'>'+
+    '<td style="max-width:320px"><b>'+n.title+'</b></td>'+
+    '<td><span class="chip '+(NOTICE_CHIP[n.type]||'gray')+'">'+typeLabel(n.type)+'</span></td>'+
+    '<td><span class="sw '+(n.off?'':'on')+'" title="'+(n.off?'重新启用':'停用')+'" onclick="toggleNotice('+n.id+')"><i></i></span></td>'+
+    '<td class="dim mono" style="white-space:nowrap">'+n.date+'</td>'+
+    '<td class="mono" style="white-space:nowrap">'+n.views.toLocaleString()+'</td>'+
+    '<td class="ops" style="text-align:right"><button class="mini" onclick="openNoticeForm('+n.id+')">编辑</button><button class="mini danger" onclick="delNotice('+n.id+')">删除</button></td>'+
+  '</tr>').join('')||'<tr><td colspan="6" class="empty">未找到匹配的公告</td></tr>';
+}
+function openNoticeForm(id){
+  const n=id?NOTICES.find(x=>x.id===id):null;
+  const custom=n?!(n.type in NOTICE_TYPES):false;
+  openModal(n?'编辑公告':'发布公告',
+    '<div class="field"><label>公告标题</label><input id="nfTitle" maxlength="60" placeholder="如：计划维护通知" value="'+(n?n.title:'')+'"></div>'+
+    '<div class="field"><label>公告类型</label><select id="nfType" onchange="syncNoticeType()">'+Object.keys(NOTICE_TYPES).map(k=>'<option value="'+k+'"'+(n&&n.type===k?' selected':'')+'>'+NOTICE_TYPES[k]+'</option>').join('')+'<option value="__custom"'+(custom?' selected':'')+'>自定义类型…</option></select></div>'+
+    '<div class="field" id="nfCustomWrap" style="display:'+(custom?'block':'none')+'"><label>自定义类型名称</label><input id="nfCustom" maxlength="10" placeholder="输入类型名称，如：活动公告 / 版本预告"></div>'+
+    '<div class="field"><label>公告内容</label><textarea id="nfBody" placeholder="填写公告正文（用户端点击公告条目时完整展示）">'+(n?n.body:'')+'</textarea></div>'+
+    '<p class="dim" style="font-size:12px;line-height:1.7">发布后即刻展示在用户端首页「公告」栏目；停用后用户端不再展示，但记录保留可重新启用。</p>',
+    [{label:'取消',cls:'ghost',fn:closeModal},
+     {label:n?'保存修改':'发 布',fn:()=>{
+       const t=$('nfTitle').value.trim(),b=$('nfBody').value.trim();
+       if(!t){toast('请填写公告标题');return}
+       if(!b){toast('请填写公告内容');return}
+       let type=$('nfType').value;
+       if(type==='__custom'){ type=$('nfCustom').value.trim(); if(!type){toast('请填写自定义类型名称');return} }
+       if(n){ n.title=t;n.type=type;n.body=b;
+         addLog('INFO','notice','编辑公告「'+t+'」（类型：'+typeLabel(type)+'）'); toast('公告已更新'); }
+       else{ NOTICES.unshift({id:++noticeSeq,type:type,title:t,body:b,date:fmtNow(),views:0,off:false});
+         addLog('INFO','notice','发布公告「'+t+'」（用户端首页已展示）'); toast('公告已发布，用户端立即可见'); }
+       closeModal();renderNotices();
+     }}]);
+}
+function toggleNotice(id){
+  const n=NOTICES.find(x=>x.id===id); if(!n) return;
+  n.off=!n.off;
+  addLog('INFO','notice',(n.off?'停用':'重新启用')+'公告「'+n.title+'」');
+  renderNotices();
+}
+function delNotice(id){
+  const n=NOTICES.find(x=>x.id===id); if(!n) return;
+  confirmModal('删除公告','确认删除公告 <b>「'+n.title+'」</b>？删除后用户端将不再展示，且不可恢复。',()=>{
+    NOTICES=NOTICES.filter(x=>x.id!==id);
+    renderNotices();
+    addLog('INFO','notice','删除公告「'+n.title+'」');
+    toast('公告已删除');
+  });
+}
+
+/* ---------- 系统日志 ---------- */
+function setLogFilter(f){logFilter=f;renderLogs()}
+function renderLogs(){
+  const defs=[['all','全部'],['INFO','INFO'],['WARN','WARN'],['ERROR','ERROR']];
+  $('logChips').innerHTML=defs.map(d=>'<span class="chip-f '+(logFilter===d[0]?'on':'')+'" onclick="setLogFilter(\''+d[0]+'\')">'+d[1]+'</span>').join('');
+  const q=($('logSearch').value||'').trim().toLowerCase();
+  const list=LOGS.filter(l=>(logFilter==='all'||l.lv===logFilter)&&(!q||l.msg.toLowerCase().includes(q)||l.mod.toLowerCase().includes(q)));
+  $('logTbody').innerHTML=list.map(l=>'<tr>'+
+    '<td class="dim mono" style="white-space:nowrap">'+l.t+'</td>'+
+    '<td><span class="chip '+(l.lv==='INFO'?'blue':l.lv==='WARN'?'amber':'red')+'">'+l.lv+'</span></td>'+
+    '<td><span class="chip gray">'+l.mod+'</span></td>'+
+    '<td>'+l.msg+'</td>'+
+  '</tr>').join('')||'<tr><td colspan="4" class="empty">未找到匹配日志</td></tr>';
+}
+
+/* ================= 积分管理（v1.4 扩展） ================= */
+const POINT_CFG={checkinReward:10,regReward:50,tokenPerPoint:1000};
+function renderPoints(){
+  // 统计卡
+  const totalGranted=USERS.reduce((s,u)=>s+(u.points>0?u.points:0),0)+3000;
+  const balanceSum=USERS.reduce((s,u)=>s+u.points,0);
+  $('ptsTotal').textContent=totalGranted;
+  $('ptsBalanceSum').textContent=balanceSum;
+  $('ptsCheckinToday').textContent='6';
+  $('ptsRateCard').textContent='1:'+POINT_CFG.tokenPerPoint;
+  $('cfgCheckinReward').value=POINT_CFG.checkinReward;
+  $('cfgRegReward').value=POINT_CFG.regReward;
+  $('cfgTokenPerPoint').value=POINT_CFG.tokenPerPoint;
+  $('officialRateHint').textContent=POINT_CFG.tokenPerPoint;
+  // 用户积分表（支持按邮箱/昵称搜索）
+  const q=($('ptsUserSearch')?$('ptsUserSearch').value:'').trim().toLowerCase();
+  const list=USERS.filter(u=>!q||u.email.toLowerCase().includes(q)||u.name.toLowerCase().includes(q));
+  $('ptsUserTbody').innerHTML=list.map(u=>'<tr>'+
+    '<td><b>'+u.email+'</b><div class="dim" style="font-size:11.5px">'+u.name+'</div></td>'+
+    '<td><b style="color:'+(u.points<0?'var(--err)':'inherit')+'">'+u.points+'</b></td>'+
+    '<td class="ops">'+
+      '<button class="mini" onclick="adjPoint('+u.id+',1)">+ 增</button>'+
+      '<button class="mini" onclick="adjPoint('+u.id+',-1)">- 减</button>'+
+      '<button class="mini danger" onclick="clearPoint('+u.id+')">清空</button>'+
+    '</td>'+
+    '<td class="ops"><button class="mini" onclick="openPtsUser('+u.id+')">明细</button></td>'+
+  '</tr>').join('')||'<tr><td colspan="4" class="empty">未找到匹配用户</td></tr>';
+}
+function savePointCfg(){
+  const cr=parseInt($('cfgCheckinReward').value)||0;
+  const rr=parseInt($('cfgRegReward').value)||0;
+  const tp=parseInt($('cfgTokenPerPoint').value)||1;
+  POINT_CFG.checkinReward=cr; POINT_CFG.regReward=rr; POINT_CFG.tokenPerPoint=tp;
+  renderPoints();
+  addLog('INFO','point','管理员更新积分配置：签到+'+cr+'，注册+'+rr+'，兑换比例 1:'+tp);
+  toast('积分规则已保存');
+}
+function bulkGrantPoints(){
+  const amt=parseInt($('bulkAmount').value);
+  if(!amt||amt<=0){ toast('请输入有效的积分数额'); return; }
+  const reason=$('bulkReason').value.trim()||'管理员下发';
+  confirmModal('向全体成员下发积分','确认向全部 <b>'+USERS.length+'</b> 名成员每人下发 <b>'+amt+'</b> 积分？（原因：'+reason+'）',()=>{
+    USERS.forEach(u=>u.points+=amt);
+    renderPoints();renderUsers();
+    addLog('INFO','point','管理员向全体成员下发 '+amt+' 积分（'+reason+'）');
+    toast('已向全体成员下发 '+amt+' 积分');
+  },false);
+}
+function bulkDeductPoints(){
+  const amt=parseInt($('bulkAmount').value);
+  if(!amt||amt<=0){ toast('请输入有效的积分数额'); return; }
+  const reason=$('bulkReason').value.trim()||'管理员扣减';
+  confirmModal('向全体成员扣减积分','确认向全部 <b>'+USERS.length+'</b> 名成员每人扣减 <b>'+amt+'</b> 积分？（原因：'+reason+'，余额不足将扣至负值）',()=>{
+    USERS.forEach(u=>u.points-=amt);
+    renderPoints();renderUsers();
+    addLog('WARN','point','管理员向全体成员扣减 '+amt+' 积分（'+reason+'）');
+    toast('已向全体成员扣减 '+amt+' 积分');
+  },false);
+}
+function adjPoint(id,dir){
+  const u=USERS.find(x=>x.id===id);
+  const label=dir>0?'增加':'扣减';
+  openModal(label+'积分','<p style="margin-bottom:12px">为 <b>'+u.email+'</b> '+label+'积分（当前余额 '+u.points+'）。</p>'+
+    '<div class="field"><label>'+label+'数额</label><input id="ptAmt" type="number" min="1" placeholder="输入积分数量"></div>'+
+    '<div class="field"><label>原因（可选）</label><input id="ptReason" placeholder="如：反馈奖励 / 违规扣分"></div>',
+    [{label:'取消',cls:'ghost',fn:closeModal},
+     {label:label+'积分',fn:()=>{
+       const a=parseInt($('ptAmt').value); if(!a||a<=0){toast('请输入有效数额');return}
+       const r=$('ptReason').value.trim()||'管理员操作';
+       u.points+=dir*a;
+       closeModal();renderPoints();renderUsers();
+       addLog('INFO','point','管理员'+label+'用户 '+u.email+' '+a+' 积分（'+r+'）');
+       toast('已'+label+' '+a+' 积分');
+     }}]);
+}
+function clearPoint(id){
+  const u=USERS.find(x=>x.id===id);
+  confirmModal('清空积分','确认将 <b>'+u.email+'</b> 的积分余额（'+u.points+'）清空为 0？',()=>{
+    u.points=0; renderPoints();renderUsers();
+    addLog('WARN','point','管理员清空用户 '+u.email+' 的积分');
+    toast('积分已清空');
+  });
+}
+function openPtsUser(id){
+  const u=USERS.find(x=>x.id===id);
+  // 模拟积分明细
+  const detail=[
+    {t:'09-27 09:12',v:+10,desc:'每日签到'},
+    {t:'09-26 09:30',v:+10,desc:'每日签到'},
+    {t:'09-25 21:03',v:-12,desc:'官方引擎翻译《Pride and Prejudice》'},
+    {t:'09-24 08:00',v:+80,desc:'反馈奖励'},
+    {t:'09-20 10:12',v:+50,desc:'新用户注册奖励'}
+  ];
+  openModal('积分明细 · '+u.email,
+    '<p class="dim" style="margin-bottom:12px">当前余额：<b style="color:'+(u.points<0?'var(--err)':'inherit')+'">'+u.points+'</b> 积分</p>'+
+    '<table class="tbl" style="min-width:0"><thead><tr><th>时间</th><th>变动</th><th>说明</th></tr></thead><tbody>'+
+    detail.map(d=>'<tr><td class="dim mono" style="white-space:nowrap">'+d.t+'</td><td><b style="color:'+(d.v>0?'var(--ok)':'var(--err)')+'">'+(d.v>0?'+':'')+d.v+'</b></td><td>'+d.desc+'</td></tr>').join('')+
+    '</tbody></table>',
+    [{label:'关闭',cls:'ghost',fn:closeModal}]);
+}
+
+/* ================= API 接入管理（v1.4 扩展） ================= */
+let officialApiEnabled=true;
+function toggleOfficialApi(){
+  officialApiEnabled=!officialApiEnabled;
+  $('officialApiSwitch').classList.toggle('on',officialApiEnabled);
+  $('officialApiSwitchLabel').textContent=officialApiEnabled?'已启用 · 用户端「官方引擎」选项可用':'已停用 · 用户端「官方引擎」选项隐藏';
+}
+function saveOfficialApi(){
+  const key=$('officialApiKey').value.trim();
+  if(!key){ toast('请填写官方 API 密钥'); return; }
+  addLog('INFO','official','管理员更新官方 API 配置（引擎'+(officialApiEnabled?'启用':'停用')+'）');
+  toast('官方 API 配置已保存');
+}
+
+/* ================= 反馈管理（v1.4 扩展） ================= */
+let FEEDBACKS=[
+  {id:1,type:'bug',title:'上传 PDF 后一直卡在解析中',body:'上传一个 8MB 的 PDF 后，进度条停在「解析分句」不动了，等了 10 分钟也没反应。',contact:'alice@ex.com',user:'alice@ex.com',name:'Alice',points:86,status:'pending',time:'09-27 20:55'},
+  {id:2,type:'suggest',title:'希望支持更多语言对',body:'目前只有中英日韩法德，能否加入西语、俄语？学小语种的人很需要。',contact:'',user:'erin@mail.cn',name:'Erin',points:320,status:'pending',time:'09-27 19:40'},
+  {id:3,type:'experience',title:'双语对照排版很清晰',body:'逐段上下对照的排版方式非常清晰，比双栏舒服多了，赞！',contact:'',user:'demo@book.app',name:'演示用户',points:128,status:'done',reward:20,time:'09-26 15:22'},
+  {id:4,type:'bug',title:'官方引擎翻译结果有乱码',body:'用官方引擎翻译日文书籍，译文里出现了乱码和重复段落。',contact:'',user:'frank@ex.com',name:'Frank',points:-20,status:'pending',time:'09-27 18:02'},
+  {id:5,type:'other',title:'【恶意】刷屏广告',body:'测试测试测试，这只是一条垃圾反馈用来测试封号流程。',contact:'',user:'david@ex.com',name:'David',points:0,status:'pending',time:'09-27 17:30'}
+];
+let fbFilter='all';
+const FB_TYPE={bug:'🐛 Bug',suggest:'💡 建议',experience:'😊 体验',other:'📝 其他'};
+function setFbFilter(f){fbFilter=f;renderFeedbacks()}
+function renderFeedbacks(){
+  $('fbChips').innerHTML=['all','pending','done'].map(f=>'<span class="chip-f '+(fbFilter===f?'on':'')+'" onclick="setFbFilter(\''+f+'\')">'+({all:'全部',pending:'待处理',done:'已处理'}[f])+'</span>').join('');
+  const q=($('fbSearch').value||'').trim().toLowerCase();
+  const list=FEEDBACKS.filter(f=>(fbFilter==='all'||f.status===fbFilter)&&(!q||f.title.toLowerCase().includes(q)||f.body.toLowerCase().includes(q)||f.user.toLowerCase().includes(q)));
+  $('fbTbody').innerHTML=list.map(f=>{
+    const stBadge=f.status==='pending'?'<span class="chip amber">待处理</span>':(f.reward>0?'<span class="chip green">已奖励 +'+f.reward+'</span>':'<span class="chip gray">已处理</span>');
+    return '<tr>'+
+      '<td><span class="chip gray">'+FB_TYPE[f.type]+'</span></td>'+
+      '<td style="max-width:280px"><b>'+f.title+'</b><div class="ell" title="'+f.body.replace(/"/g,'&quot;')+'" style="max-width:280px">'+f.body+'</div></td>'+
+      '<td><b>'+f.name+'</b><div class="dim" style="font-size:11.5px">'+f.user+' · 积分 '+f.points+'</div></td>'+
+      '<td>'+stBadge+'</td>'+
+      '<td class="dim mono" style="white-space:nowrap">'+f.time+'</td>'+
+      '<td class="ops"><button class="mini" onclick="openFeedback('+f.id+')">查看处理</button></td>'+
+    '</tr>';
+  }).join('')||'<tr><td colspan="6" class="empty">暂无反馈</td></tr>';
+}
+function openFeedback(id){
+  const f=FEEDBACKS.find(x=>x.id===id); if(!f) return;
+  const u=USERS.find(x=>x.user===f.user);
+  const statusChip=f.status==='pending'?'<span class="chip amber">待处理</span>':(f.reward>0?'<span class="chip green">已奖励 +'+f.reward+'</span>':'<span class="chip gray">已处理</span>');
+  openModal('反馈处理 · #'+f.id,
+    '<div class="tmeta"><div><span>反馈类型</span><b>'+FB_TYPE[f.type]+'</b></div><div><span>状态</span><b>'+statusChip+'</b></div><div><span>提交时间</span><b>'+f.time+'</b></div></div>'+
+    '<div style="margin-bottom:12px"><div style="font-size:13px;font-weight:600;margin-bottom:4px">'+f.title+'</div><div style="font-size:13px;color:var(--sub);line-height:1.7;background:#f8fafc;border:1px solid var(--line);border-radius:9px;padding:12px 14px">'+f.body+'</div></div>'+
+    (f.contact?'<p class="dim" style="font-size:12px;margin-bottom:12px">联系方式：'+f.contact+'</p>':'')+
+    '<div style="background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:14px">'+
+      '<div style="font-size:12px;color:var(--sub);margin-bottom:8px">提交用户信息</div>'+
+      '<div style="font-size:13.5px"><b>'+f.name+'</b>（'+f.user+'）· 当前积分 <b style="color:'+(u&&u.points<0?'var(--err)':'inherit')+'">'+(u?u.points:f.points)+'</b> · 状态 '+(u&&u.status==='active'?'<span style="color:var(--ok)">正常</span>':'<span style="color:var(--warn)">已禁用</span>')+'</div>'+
+    '</div>'+
+    '<div class="field"><label>奖励积分（优质反馈）</label><input id="fbReward" type="number" min="0" value="'+(f.reward||'')+'" placeholder="输入奖励积分数额"></div>'+
+    '<div class="field"><label>扣分（恶意反馈）</label><input id="fbPenalty" type="number" min="0" placeholder="输入扣减积分数额"></div>',
+    [
+      {label:'取消',cls:'ghost',fn:closeModal},
+      {label:'奖励积分',fn:()=>{
+        const r=parseInt($('fbReward').value)||0;
+        if(!r){toast('请输入奖励积分数额');return}
+        f.status='done';f.reward=r;
+        if(u)u.points+=r;
+        closeModal();renderFeedbacks();renderPoints();renderUsers();
+        addLog('INFO','feedback','管理员奖励 '+f.user+' 反馈 '+r+' 积分');
+        toast('已奖励 '+r+' 积分给 '+f.user);
+      }},
+      {label:'扣分',cls:'ghost',fn:()=>{
+        const p=parseInt($('fbPenalty').value)||0;
+        if(!p){toast('请输入扣减积分数额');return}
+        f.status='done';f.reward=0;
+        if(u)u.points-=p;
+        closeModal();renderFeedbacks();renderPoints();renderUsers();
+        addLog('WARN','feedback','管理员扣除 '+f.user+' '+p+' 积分（恶意反馈）');
+        toast('已扣除 '+f.user+' '+p+' 积分');
+      }},
+      {label:'封禁账号',cls:'danger',fn:()=>{
+        confirmModal('封禁账号','确认封禁用户 <b>'+f.user+'</b>？封禁后该用户将被禁用，无法登录。',()=>{
+          if(u){u.status='disabled';}
+          f.status='done';
+          closeModal();renderFeedbacks();renderPoints();renderUsers();
+          addLog('ERROR','feedback','管理员封禁用户 '+f.user+'（恶意反馈）');
+          toast('已封禁 '+f.user);
+        });
+      }}
+    ]);
+}
+
+/* ================= 风控中心（v1.5 扩展） ================= */
+const RISK_CFG={maxSingle:500,maxFreq:10,maxDaily:2000};
+const RISK_RULES={
+  single:{name:'单次消耗超限',desc:'单笔翻译消耗积分超过阈值'},
+  freq:{name:'短时高频',desc:'5 分钟内翻译请求次数超阈值'},
+  daily:{name:'单日累计超限',desc:'单日消耗积分累计超过阈值'}
+};
+let RISK_ALERTS=[
+  {id:1,user:'frank@ex.com',name:'Frank',rule:'freq',detail:'5 分钟内发起 18 次官方引擎翻译请求，疑似脚本刷量，已自动封号。',time:'09-27 20:44',status:'pending'},
+  {id:2,user:'bob@ex.com',name:'Bob',rule:'single',detail:'单次翻译消耗 1,240 积分（超大文档），超过上限 500，已自动封号。',time:'09-27 19:15',status:'pending'},
+  {id:3,user:'david@ex.com',name:'David',rule:'daily',detail:'单日累计消耗 2,360 积分，超过上限 2000，已自动封号。',time:'09-26 22:08',status:'resolved',resolve:'confirm'}
+];
+let riskFilter='pending';
+function pendingRiskCount(){return RISK_ALERTS.filter(a=>a.status==='pending').length}
+function renderRisk(){
+  // 规则配置回填
+  $('cfgMaxSingle').value=RISK_CFG.maxSingle;
+  $('cfgMaxFreq').value=RISK_CFG.maxFreq;
+  $('cfgMaxDaily').value=RISK_CFG.maxDaily;
+  // 筛选 chips
+  $('riskChips').innerHTML=['pending','resolved'].map(f=>'<span class="chip-f '+(riskFilter===f?'on':'')+'" onclick="setRiskFilter(\''+f+'\')">'+({pending:'待处理',resolved:'已处理'}[f])+' '+(f==='pending'?pendingRiskCount():RISK_ALERTS.filter(a=>a.status===f).length)+'</span>').join('');
+  const list=RISK_ALERTS.filter(a=>riskFilter==='all'||a.status===riskFilter||(riskFilter==='pending'&&a.status==='pending'));
+  const shown=RISK_ALERTS.filter(a=>a.status==='pending');
+  $('riskTbody').innerHTML=(riskFilter==='pending'?shown:RISK_ALERTS.filter(a=>a.status===riskFilter)).map(a=>{
+    const rule=RISK_RULES[a.rule];
+    const stBadge=a.status==='pending'?'<span class="chip red">待处理 · 已封号</span>':(a.resolve==='confirm'?'<span class="chip amber">已确认封号</span>':'<span class="chip green">已解封（误判）</span>');
+    const ops=a.status==='pending'
+      ? '<button class="mini" onclick="openRisk('+a.id+')">复核</button>'
+      : '<span class="dim" style="font-size:12px">'+ (a.resolve==='confirm'?'已确认封号':'已解封') +'</span>';
+    return '<tr>'+
+      '<td><b>'+a.name+'</b><div class="dim" style="font-size:11.5px">'+a.user+'</div></td>'+
+      '<td><span class="chip violet">'+rule.name+'</span><div class="dim" style="font-size:11px">'+rule.desc+'</div></td>'+
+      '<td style="max-width:320px"><div class="ell" title="'+a.detail.replace(/"/g,'&quot;')+'" style="max-width:320px">'+a.detail+'</div></td>'+
+      '<td class="dim mono" style="white-space:nowrap">'+a.time+'</td>'+
+      '<td>'+stBadge+'</td>'+
+      '<td class="ops">'+ops+'</td>'+
+    '</tr>';
+  }).join('')||'<tr><td colspan="6" class="empty">暂无告警</td></tr>';
+  // 导航角标 + 概览横幅
+  const n=pendingRiskCount();
+  $('riskBadge').style.display=n>0?'':'none';
+  $('riskBadge').textContent=n;
+  $('riskBanner').innerHTML=n>0
+    ? '<div class="note red" style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;gap:10px"><span>⚠️ <b>'+n+'</b> 条风控告警待处理：检测到异常积分消耗已自动临时封号，请及时复核。</span><button class="mini danger" onclick="nav(\'risk\')">前往处理 →</button></div>'
+    : '';
+}
+function setRiskFilter(f){riskFilter=f;renderRisk()}
+function saveRiskCfg(){
+  RISK_CFG.maxSingle=parseInt($('cfgMaxSingle').value)||500;
+  RISK_CFG.maxFreq=parseInt($('cfgMaxFreq').value)||10;
+  RISK_CFG.maxDaily=parseInt($('cfgMaxDaily').value)||2000;
+  addLog('INFO','risk','管理员更新风控规则：单次>'+RISK_CFG.maxSingle+' / 5分钟>'+RISK_CFG.maxFreq+'次 / 单日>'+RISK_CFG.maxDaily);
+  toast('风控规则已保存');
+}
+function openRisk(id){
+  const a=RISK_ALERTS.find(x=>x.id===id); if(!a) return;
+  const u=USERS.find(x=>x.email===a.user);
+  const rule=RISK_RULES[a.rule];
+  openModal('风控告警复核 · #'+a.id,
+    '<div class="tmeta"><div><span>命中规则</span><b>'+rule.name+'</b></div><div><span>状态</span><b><span class="chip red">已临时封号</span></b></div><div><span>触发时间</span><b>'+a.time+'</b></div></div>'+
+    '<div style="font-size:13.5px;line-height:1.7;background:#fef2f2;border:1px solid #fecaca;border-radius:9px;padding:12px 14px;margin-bottom:14px">'+a.detail+'</div>'+
+    '<div style="background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:14px">'+
+      '<div style="font-size:12px;color:var(--sub);margin-bottom:8px">涉及用户信息</div>'+
+      '<div style="font-size:13.5px"><b>'+a.name+'</b>（'+a.user+'）· 当前积分 <b style="color:'+(u&&u.points<0?'var(--err)':'inherit')+'">'+(u?u.points:0)+'</b> · 状态 '+(u&&u.status==='active'?'<span style="color:var(--ok)">正常</span>':'<span style="color:var(--warn)">已禁用</span>')+'</div>'+
+    '</div>'+
+    '<p class="dim" style="font-size:12.5px;margin-bottom:6px">请复核后选择处理方式：</p>',
+    [
+      {label:'解除封号（误判）',cls:'ghost',fn:()=>{
+        a.status='resolved';a.resolve='unban';
+        if(u)u.status='active';
+        closeModal();renderRisk();renderUsers();renderDash();
+        addLog('WARN','risk','管理员解除 '+a.user+' 的风控封号（误判）');
+        toast('已解除 '+a.user+' 的封号');
+      }},
+      {label:'确认封号',fn:()=>{
+        a.status='resolved';a.resolve='confirm';
+        closeModal();renderRisk();renderUsers();
+        addLog('ERROR','risk','管理员确认维持 '+a.user+' 的风控封号');
+        toast('已确认封号：'+a.user);
+      }},
+      {label:'封号 + 扣积分',cls:'danger',fn:()=>{
+        confirmModal('封号并扣积分','确认封禁 <b>'+a.user+'</b> 并扣除积分？请输入扣减数额（另弹窗）。',()=>{
+          a.status='resolved';a.resolve='confirm';
+          if(u)u.status='disabled';
+          const p=parseInt(prompt('扣减积分数额：','100'))||0;
+          if(u&&p>0)u.points-=p;
+          closeModal();renderRisk();renderUsers();renderPoints();renderDash();
+          addLog('ERROR','risk','管理员封禁 '+a.user+' 并扣减 '+p+' 积分（风控）');
+          toast('已封号并扣分：'+a.user);
+        });
+      }}
+    ]);
+}
+
+/* ---------- 初始化 ---------- */
+function renderAll(){renderDash();renderUsers();renderTasks();renderCache();renderEngines();renderNotices();renderLogs();renderPoints();renderFeedbacks();renderRisk()}
+/* ---------- 可访问性增强（键盘可达 + ARIA） ---------- */
+(function a11y(){
+  function mark(el){
+    if(!el || el.nodeType !== 1) return;
+    if(/^(BUTTON|A|INPUT|SELECT|TEXTAREA|LABEL)$/.test(el.tagName)) return;
+    if(!el.hasAttribute('role')) el.setAttribute('role','button');
+    if(!el.hasAttribute('tabindex')) el.tabIndex = 0;
+  }
+  function enhance(root){
+    if(!root || !root.querySelectorAll) return;
+    Array.prototype.forEach.call(root.querySelectorAll('[onclick]'), mark);
+  }
+  enhance(document);
+  new MutationObserver(function(muts){
+    muts.forEach(function(m){
+      Array.prototype.forEach.call(m.addedNodes, function(n){
+        if(n.nodeType !== 1) return;
+        if(n.matches && n.matches('[onclick]')) mark(n);
+        enhance(n);
+      });
+    });
+  }).observe(document.body, { childList:true, subtree:true });
+  document.addEventListener('keydown', function(e){
+    if(e.key !== 'Enter' && e.key !== ' ') return;
+    var t = e.target && e.target.closest && e.target.closest('[onclick]');
+    if(t && !/^(BUTTON|A|INPUT|SELECT|TEXTAREA)$/.test(t.tagName)){ e.preventDefault(); t.click(); }
+  });
+})();
+
+(function init(){
+  renderAll();
+  // 每次打开均从登录页开始（演示需要反复展示登录流程）
+  showScreen('auth');
+})();
+function showScreen(name){
+  const auth=$('screen-admin-auth'),app=$('screen-admin');
+  if(name==='auth'){ app.classList.add('hidden'); auth.classList.remove('hidden'); }
+  else{ auth.classList.add('hidden'); app.classList.remove('hidden'); }
+}
+</script>
+
+
+</body></html>

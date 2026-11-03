@@ -1,0 +1,115 @@
+:root {
+  --brand: #2563eb;
+  --brand-dark: #1d4ed8;
+  --brand-light: #eff6ff;
+  --ink: #0f172a;
+  --sub: #64748b;
+  --line: #e2e8f0;
+  --bg: #f6f8fc;
+  --ok: #16a34a;
+  --warn: #d97706;
+  --danger: #dc2626;
+  --radius: 14px;
+  --shadow: 0 8px 28px rgba(15, 23, 42, 0.07);
+}
+
+* { box-sizing: border-box; }
+
+html, body, #app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--brand); text-decoration: none; }
+
+.page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 20px 64px;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 22px;
+}
+
+.card + .card { margin-top: 18px; }
+
+.section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 14px;
+}
+
+.muted { color: var(--sub); font-size: 13px; }
+
+.row { display: flex; gap: 12px; align-items: center; }
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+@media (max-width: 860px) {
+  .grid-2 { grid-template-columns: 1fr; }
+  .page { padding: 16px 14px 56px; }
+  .card { padding: 16px; }
+}
+
+/* 结果页双语段落 */
+.seg { padding: 14px 0; border-bottom: 1px dashed var(--line); }
+.seg:last-child { border-bottom: none; }
+.seg .s { margin: 0 0 8px; line-height: 1.8; color: var(--ink); }
+.seg .t {
+  margin: 0;
+  line-height: 1.8;
+  color: #1e40af;
+  background: #eff6ff;
+  border-left: 3px solid #93c5fd;
+  border-radius: 0 8px 8px 0;
+  padding: 8px 12px;
+  white-space: pre-wrap;
+}
+.seg.failed .t {
+  background: #fffbeb;
+  border-left-color: #fbbf24;
+  color: #92400e;
+}
+.flag {
+  display: inline-block;
+  font-size: 12px;
+  color: #b45309;
+  background: #fef3c7;
+  border-radius: 999px;
+  padding: 1px 8px;
+  margin-left: 6px;
+}
+
+/* 空状态 */
+.empty {
+  text-align: center;
+  color: var(--sub);
+  padding: 42px 0;
+}
+.empty .ic { font-size: 34px; margin-bottom: 8px; }
+
+/* 打印（PDF 导出） */
+@media print {
+  body { background: #fff; }
+  .no-print { display: none !important; }
+}

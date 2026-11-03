@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="HiKlzZCY6VupV5mZSuFEnn">
+<head data-page-node-id="ZYuWFZMFtOTDlFAlEIBZDe">
+<meta charset="UTF-8" data-page-node-id="VUsAePoCeCkyRpyHEfMFkZ">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="CpX3TrXK3wRzEMkAkt7S6E">
+<title>双语书工厂 · 可交互原型</title>
+<style>
+  :root{
+    --primary:#2563eb; --primary-d:#1e40af; --primary-l:#eff6ff;
+    --ink:#1f2937; --sub:#6b7280; --line:#e5e7eb; --bg:#f6f8fb; --card:#fff;
+    --ok:#16a34a; --warn:#d97706; --err:#dc2626;
+    --r:14px; --shadow:0 6px 18px rgba(15,23,42,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{font-family:"PingFang SC","Microsoft YaHei","Segoe UI",sans-serif;color:var(--ink);background:var(--bg);line-height:1.6}
+  button{font-family:inherit;cursor:pointer}
+  input,select{font-family:inherit}
+  .hidden{display:none!important}
+  .wrap{max-width:1060px;margin:0 auto;padding:0 20px 70px}
+
+  /* ===== 通用组件 ===== */
+  .btn{display:block;width:100%;border:none;border-radius:10px;padding:12px 0;background:var(--primary);color:#fff;font-size:15px;font-weight:600;transition:opacity .15s}
+  .btn:hover{opacity:.9}
+  .btn:active{transform:scale(.99)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn-outline{background:#fff;color:var(--primary);border:1px solid var(--primary)}
+  .btn-ghost{background:#fff;color:var(--sub);border:1px solid var(--line)}
+  .field{margin-bottom:12px}
+  .field label{display:block;font-size:13px;color:var(--sub);margin-bottom:5px}
+  .field input,.field select{width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:10px 12px;font-size:14.5px;background:#fff;color:var(--ink);outline:none;transition:border .15s,box-shadow .15s}
+  .field input:focus,.field select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.14)}
+  .ferr{font-size:12px;color:var(--err);min-height:17px;margin-top:4px}
+  .chip-status{font-size:11px;padding:1px 9px;border-radius:999px;white-space:nowrap}
+  .st-ready{color:var(--ok);background:#f0fdf4;border:1px solid #bbf7d0}
+  .logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#2563eb,#60a5fa);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;flex-shrink:0}
+  .toast{background:#0f172a;color:#fff;padding:10px 20px;border-radius:999px;font-size:13.5px;box-shadow:0 8px 24px rgba(15,23,42,.25);animation:tin .25s ease;max-width:86vw;text-align:center}
+  @keyframes tin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  #toasts{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);z-index:80;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+
+  /* ===== 认证页 ===== */
+  #screen-auth{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:linear-gradient(165deg,#eff6ff 0%,#f6f8fb 55%,#eef2ff 100%);position:relative;overflow:hidden}
+  .blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.5;pointer-events:none}
+  .blob.b1{width:340px;height:340px;background:#bfdbfe;top:-90px;right:-60px}
+  .blob.b2{width:300px;height:300px;background:#ddd6fe;bottom:-80px;left:-70px}
+  .auth-card{position:relative;z-index:1;width:100%;max-width:780px;background:var(--card);border-radius:20px;box-shadow:0 20px 60px rgba(30,64,175,.14);display:grid;grid-template-columns:1fr 1fr;overflow:hidden;animation:pop .35s ease}
+  @keyframes pop{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
+  .auth-brand{background:linear-gradient(150deg,#2563eb,#4f8ef7);color:#fff;padding:38px 32px;display:flex;flex-direction:column;justify-content:center}
+  .auth-brand .logo{width:54px;height:54px;border-radius:15px;font-size:26px;background:rgba(255,255,255,.22);backdrop-filter:blur(4px)}
+  .auth-brand h1{font-size:22px;margin-top:16px}
+  .auth-brand .slogan{font-size:13.5px;opacity:.85;margin-top:6px}
+  .auth-brand ul{list-style:none;margin-top:26px;font-size:13.5px}
+  .auth-brand li{padding:7px 0;display:flex;gap:9px;align-items:flex-start;opacity:.95}
+  .auth-brand li i{width:19px;height:19px;border-radius:50%;background:rgba(255,255,255,.25);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-style:normal;flex-shrink:0;margin-top:2px}
+  .auth-form{padding:38px 34px}
+  .auth-tabs{display:flex;gap:22px;border-bottom:1px solid var(--line);margin-bottom:20px}
+  .auth-tabs span{font-size:15px;color:var(--sub);padding-bottom:9px;cursor:pointer}
+  .auth-tabs span.on{color:var(--primary);font-weight:700;border-bottom:2.5px solid var(--primary)}
+  .demo-bar{margin-top:16px;background:#f8fafc;border:1px dashed var(--line);border-radius:10px;padding:10px 14px;font-size:12.5px;color:var(--sub);display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .demo-bar button{border:1px solid #bfdbfe;background:var(--primary-l);color:var(--primary);border-radius:7px;padding:4px 12px;font-size:12.5px;font-weight:600;white-space:nowrap}
+  .shake{animation:shake .4s}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}50%{transform:translateX(6px)}75%{transform:translateX(-4px)}}
+
+  /* ===== 应用框架 ===== */
+  #screen-app{min-height:100vh;display:flex;flex-direction:column}
+  .topbar{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .topbar .inner{max-width:1060px;margin:0 auto;padding:0 20px;height:60px;display:flex;align-items:center;gap:11px}
+  .topbar .brand{font-weight:800;font-size:16.5px}
+  .topbar .brand small{display:block;font-size:10.5px;color:var(--sub);font-weight:400;line-height:1.1}
+  .topbar .right{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .badge-demo{font-size:11px;color:var(--primary-d);background:var(--primary-l);border:1px solid #bfdbfe;border-radius:999px;padding:2px 10px}
+  .hello{font-size:13px;color:var(--sub)}
+  .avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#2563eb,#60a5fa);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700}
+  .logout{border:1px solid var(--line);background:#fff;color:var(--sub);border-radius:9px;padding:6px 13px;font-size:13px}
+  .logout:hover{color:var(--err);border-color:#fecaca}
+  .tabs{max-width:1060px;margin:20px auto 0;padding:0 20px;display:flex;gap:9px}
+  .tab{flex:1;border:1px solid var(--line);background:#fff;border-radius:999px;padding:10px 8px;font-size:14px;color:var(--sub);text-align:center;transition:all .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;justify-content:center;gap:5px;line-height:1.2}
+  .tab.on{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:600}
+  .view{margin-top:20px;animation:fadein .25s ease}
+  @keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  /* ===== 上传页 ===== */
+  .up-grid{display:grid;grid-template-columns:1.3fr .85fr;gap:20px;align-items:start}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:22px}
+  .panel h3{font-size:15.5px;margin-bottom:14px}
+  .drop{border:2px dashed #93c5fd;border-radius:13px;background:var(--primary-l);padding:34px 18px;text-align:center;cursor:pointer;transition:all .15s}
+  .drop:hover,.drop.dragover{background:#dbeafe;border-color:var(--primary)}
+  .drop .ic{font-size:30px}
+  .drop b{display:block;font-size:14.5px;margin-top:8px;color:var(--primary-d)}
+  .drop small{font-size:12px;color:var(--sub)}
+  .file-chip{display:flex;align-items:center;gap:10px;background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:10px 13px;margin-top:12px;font-size:13.5px}
+  .file-chip .fic{font-size:20px}
+  .file-chip .fname{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .file-chip .fsize{color:var(--sub);font-size:12px;white-space:nowrap}
+  .file-chip .fx{margin-left:auto;border:none;background:none;color:var(--sub);font-size:17px;padding:0 4px}
+  .file-chip .fx:hover{color:var(--err)}
+  .side-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px;margin-bottom:16px}
+  .side-card h4{font-size:14.5px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  .side-card p{font-size:13px;color:var(--sub)}
+  .sample-row{display:flex;align-items:center;gap:10px;margin-top:12px}
+  .sample-row .mini-cover{width:40px;height:40px;border-radius:9px;background:linear-gradient(150deg,#f59e0b,#fbbf24);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;flex-shrink:0}
+  .sample-row .si{flex:1;min-width:0}
+  .sample-row .si b{font-size:13.5px;display:block}
+  .sample-row .si small{font-size:11.5px;color:var(--sub)}
+  .link-btn{border:none;background:none;color:var(--primary);font-size:13px;font-weight:600;text-decoration:underline}
+  .engine-note{display:block;font-size:12.5px;line-height:1.75;color:var(--sub);background:#f8fafc;border:1px solid var(--line);border-radius:9px;padding:10px 14px;margin-top:14px}
+  .engine-note .en-title{font-weight:600;color:var(--ink);margin-right:6px}
+  .engine-note .en-dot{margin:0 6px;color:#cbd5e1}
+  .notice-bar{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin-bottom:16px;box-shadow:var(--shadow)}
+  .notice-head{display:flex;align-items:baseline;gap:8px;font-size:14px;font-weight:700;color:var(--ink);margin-bottom:8px}
+  .notice-head .ndim{font-size:12px;font-weight:400;color:var(--sub)}
+  .notice-item{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;border-radius:9px;cursor:pointer;transition:background .15s}
+  .notice-item:hover{background:#f8fafc}
+  .ntag{display:inline-block;font-size:11px;font-weight:600;border-radius:6px;padding:2px 8px;margin-top:2px;flex-shrink:0}
+  .ntag.maintenance{color:#b45309;background:#fffbeb;border:1px solid #fde68a}
+  .ntag.update{color:#1d4ed8;background:#eff6ff;border:1px solid #bfdbfe}
+  .ntag.system{color:#15803d;background:#f0fdf4;border:1px solid #bbf7d0}
+  .notice-item .nt{font-size:13.5px;color:var(--ink);font-weight:600;line-height:1.5}
+  .notice-item .nd{font-size:12px;color:var(--sub);margin-top:3px}
+  .notice-empty{font-size:13px;color:var(--sub);text-align:center;padding:16px}
+  .engine-keys{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:2px}
+  .engine-keys .ek label{display:block;font-size:12.5px;color:var(--sub);margin-bottom:4px}
+  .engine-keys .ek input{width:100%;border:1px solid #cbd5e1;border-radius:8px;padding:8px 11px;font-size:13.5px;outline:none;transition:border .15s,box-shadow .15s;background:#fff}
+  .engine-keys .ek input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.14)}
+  .engine-keys .ek-clear{grid-column:1/-1;text-align:right;margin-top:-4px}
+  @media (max-width:640px){.engine-keys{grid-template-columns:1fr}}
+  .engine-status{font-size:11px;padding:1px 9px;border-radius:999px;margin-left:6px;vertical-align:1px;font-weight:600}
+  .engine-status.ok{color:var(--ok);background:#f0fdf4;border:1px solid #bbf7d0}
+  .engine-status.off{color:var(--warn);background:#fffbeb;border:1px solid #fde68a}
+
+  /* ===== 进度页 ===== */
+  .proc-card{max-width:580px;margin:30px auto;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:28px 26px;box-shadow:var(--shadow)}
+  .proc-card h3{font-size:16px;text-align:center}
+  .proc-card .sub{font-size:12.5px;color:var(--sub);text-align:center;margin:5px 0 14px}
+  .steps{list-style:none;margin:6px 0 16px}
+  .step{display:flex;align-items:center;gap:12px;padding:12px 2px;font-size:14px;color:#9ca3af;border-bottom:1px dashed var(--line)}
+  .step:last-child{border-bottom:none}
+  .step .dot{width:26px;height:26px;border-radius:50%;background:#e5e7eb;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;position:relative}
+  .step.done{color:var(--ink)}
+  .step.done .dot{background:var(--ok);color:#fff}
+  .step.doing{color:var(--primary);font-weight:600}
+  .step.doing .dot{background:var(--primary)}
+  .step.doing .dot::after{content:"";position:absolute;inset:3px;border-radius:50%;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .step .extra{margin-left:auto;font-size:12px;color:var(--sub);font-weight:400}
+  .bar{height:10px;background:#e5e7eb;border-radius:99px;overflow:hidden}
+  .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#2563eb,#60a5fa);border-radius:99px;transition:width .18s ease}
+  .bar-label{display:flex;justify-content:space-between;font-size:12px;color:var(--sub);margin-top:7px}
+
+  /* ===== 结果页 ===== */
+  .res-grid{display:grid;grid-template-columns:350px 1fr;gap:20px;align-items:start}
+  .ok-icon{width:56px;height:56px;border-radius:50%;background:#f0fdf4;border:1px solid #bbf7d0;color:var(--ok);display:flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:12px}
+  .res-card h3{font-size:17px;line-height:1.4}
+  .res-card .meta{font-size:12.5px;color:var(--sub);margin-top:4px}
+  .stat{display:flex;justify-content:space-between;font-size:13.5px;padding:8px 0;border-bottom:1px dashed var(--line)}
+  .stat span{color:var(--sub)}
+  .stat b{font-weight:600}
+  .dl-row{display:flex;gap:10px;margin-top:16px}
+  .dl-btn{flex:1;border-radius:10px;padding:11px 0;text-align:center;font-size:14px;font-weight:600;cursor:pointer;border:1px solid;transition:transform .12s}
+  .dl-btn:active{transform:scale(.98)}
+  .dl-btn.epub{background:var(--primary);border-color:var(--primary);color:#fff}
+  .dl-btn.pdf{background:#fff;border-color:#fecaca;color:var(--err)}
+  .action-row{display:flex;gap:10px;margin-top:10px}
+  .action-row .btn{padding:10px 0;font-size:13.5px}
+  .preview-card h4{font-size:14.5px;margin-bottom:4px}
+  .preview-card .pnote{font-size:12px;color:var(--sub);margin-bottom:14px}
+  .seg{margin-bottom:15px}
+  .seg .s{font-size:14.5px;color:var(--ink)}
+  .seg .t{background:var(--primary-l);border-left:3px solid #93c5fd;padding:7px 11px;border-radius:0 8px 8px 0;font-size:13.5px;color:var(--primary-d);margin-top:5px}
+  .seg.failed .t{background:#fffbeb;border-left-color:#fcd34d;color:#92400e}
+  .flag{display:inline-block;font-size:11px;color:var(--warn);background:#fffbeb;border:1px solid #fde68a;border-radius:999px;padding:0 8px;margin-left:8px;vertical-align:1px}
+
+  /* ===== 书架 ===== */
+  .shelf{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .book-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;transition:box-shadow .15s,transform .15s;cursor:pointer}
+  .book-card:hover{box-shadow:var(--shadow);transform:translateY(-2px)}
+  .book-card .top{display:flex;align-items:center;gap:11px}
+  .b-cover{width:44px;height:44px;border-radius:10px;background:linear-gradient(150deg,#2563eb,#60a5fa);color:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;flex-shrink:0}
+  .book-card h4{font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+  .book-card .meta{font-size:12px;color:var(--sub);margin:9px 0 12px}
+  .book-card .acts{display:flex;gap:8px}
+  .act{flex:1;border-radius:8px;padding:7px 0;font-size:12.5px;text-align:center;border:1px solid var(--line);background:#fff;color:var(--sub);cursor:pointer}
+  .act.main{background:var(--primary-l);border-color:#bfdbfe;color:var(--primary);font-weight:600}
+  .act.del:hover{color:var(--err);border-color:#fecaca}
+  .empty{grid-column:1/-1;border:2px dashed #cbd5e1;border-radius:var(--r);padding:56px 20px;text-align:center;color:var(--sub)}
+  .empty .eic{font-size:40px}
+  .empty p{font-size:14px;margin:10px 0 16px}
+  .back-link{display:inline-flex;align-items:center;gap:6px;border:none;background:none;color:var(--sub);font-size:13.5px;padding:0;margin-bottom:14px}
+  .back-link:hover{color:var(--primary)}
+
+  /* ===== 弹窗 ===== */
+  .modal-wrap{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:60;display:flex;align-items:center;justify-content:center;padding:20px}
+  .modal{background:#fff;border-radius:16px;padding:24px;width:min(92vw,380px);animation:pop .25s ease}
+  .modal h4{font-size:16px;margin-bottom:8px}
+  .modal p{font-size:13.5px;color:var(--sub)}
+  .modal .m-row{display:flex;gap:10px;margin-top:20px}
+  .modal .m-row .btn{padding:10px 0;font-size:14px}
+  .btn-danger{background:var(--err)}
+
+  /* ===== 打印（PDF 导出） ===== */
+  #printArea{display:none}
+  @media print{
+    #app,#toasts,#modalDel,#modalNotice{display:none!important}
+    body{background:#fff}
+    #printArea{display:block;padding:0}
+    #printArea h1{font-size:20pt;text-align:center;font-family:"Songti SC","SimSun",serif;margin-bottom:4pt}
+    #printArea .p-meta{text-align:center;font-size:9pt;color:#666;margin-bottom:16pt}
+    #printArea .ps{font-size:10.5pt;margin:4pt 0;font-family:Georgia,"Times New Roman",serif}
+    #printArea .pt{font-size:10pt;color:#333;border-left:2pt solid #93c5fd;padding:2pt 8pt;margin:0 0 12pt;background:#f6f9ff}
+    #printArea .pf{font-size:9pt;color:#92400e;background:#fffbeb;border:1pt solid #fde68a;border-radius:4pt;padding:2pt 8pt;margin:0 0 12pt}
+  }
+
+  /* ===== 移动端适配 ===== */
+  @media (max-width:899px){
+    .up-grid,.res-grid{grid-template-columns:1fr}
+    .shelf{grid-template-columns:repeat(2,1fr)}
+    .auth-card{grid-template-columns:1fr;max-width:460px}
+    .auth-brand{padding:24px 26px}
+    .auth-brand ul{display:none}
+    .auth-brand h1{font-size:19px;margin-top:12px}
+    .auth-form{padding:26px 24px}
+  }
+  @media (max-width:640px){
+    .wrap{padding:0 14px 60px}
+    .tabs{padding:0 14px;gap:8px;flex-wrap:wrap}
+    .tab{padding:10px 6px;font-size:13px;flex:1 1 calc(50% - 5px);min-width:0}
+    .topbar .inner{padding:0 14px;height:56px}
+    .topbar .inner{gap:6px}
+    .topbar .right{gap:6px}
+    .topbar .right .btn{padding:7px 9px;font-size:12px}
+    .topbar .brand{font-size:15px;white-space:nowrap}
+    .topbar .brand small{display:none}
+    .brand-en{display:none}
+    .brand-short{display:inline}
+    .hello,.badge-demo{display:none}
+    .panel{padding:17px 15px}
+    .shelf{grid-template-columns:1fr}
+    .proc-card{margin:16px auto;padding:22px 18px}
+    .res-card h3{font-size:15.5px}
+    .seg .s{font-size:14px}
+    .seg .t{font-size:13px}
+    #toasts{bottom:20px}
+  }
+  .brand-short{display:none}
+
+  /* ===== 积分中心 & 反馈（v1.4 扩展） ===== */
+  .points-pill{display:inline-flex;align-items:center;gap:5px;border:1px solid #fde68a;background:linear-gradient(135deg,#fffbeb,#fef3c7);color:#92400e;border-radius:999px;padding:5px 13px;font-size:13px;font-weight:600;white-space:nowrap}
+  .points-pill .pp-ic{font-size:14px}
+  .points-pill b{font-weight:800}
+  .points-pill.checkin{background:linear-gradient(135deg,#eff6ff,#dbeafe);border-color:#bfdbfe;color:#1d4ed8}
+  .points-pill.checkin.done{background:#f3f4f6;border-color:#e5e7eb;color:#9ca3af;cursor:default}
+  .points-hero{display:flex;justify-content:space-between;align-items:center;gap:20px;background:linear-gradient(135deg,#2563eb,#4f8ef7);border-radius:var(--r);padding:26px 30px;color:#fff;box-shadow:var(--shadow);flex-wrap:wrap}
+  .ph-label{font-size:13px;opacity:.9}
+  .ph-balance{font-size:38px;font-weight:800;line-height:1.2;margin-top:4px}
+  .ph-sub{font-size:12.5px;opacity:.9;margin-top:6px}
+  .ph-sub b{font-weight:700}
+  .ph-right{display:flex;flex-direction:column;gap:10px;align-items:flex-end}
+  .ph-right .btn{width:auto;padding:12px 22px;background:#fff;color:#2563eb}
+  .ph-right .btn:disabled{background:#e5e7eb;color:#9ca3af;cursor:not-allowed}
+  .ph-checkin-tip{font-size:12.5px;opacity:.95}
+  .pts-tabs{display:flex;gap:8px;margin-bottom:14px}
+  .pts-tab{border:1px solid var(--line);background:#fff;color:var(--sub);border-radius:999px;padding:6px 16px;font-size:13px;cursor:pointer;transition:all .15s}
+  .pts-tab.on{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:600}
+  .pts-item{display:flex;align-items:center;gap:14px;padding:12px 4px;border-bottom:1px dashed var(--line)}
+  .pts-item:last-child{border-bottom:none}
+  .pts-item .p-ic{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:#f8fafc;border:1px solid var(--line)}
+  .pts-item .p-body{flex:1;min-width:0}
+  .pts-item .p-title{font-size:14px;font-weight:600}
+  .pts-item .p-desc{font-size:12px;color:var(--sub);margin-top:2px}
+  .pts-item .p-val{font-size:16px;font-weight:800;white-space:nowrap}
+  .p-val.earn{color:var(--ok)}
+  .p-val.spend{color:var(--err)}
+  .pts-empty{text-align:center;color:var(--sub);font-size:13px;padding:30px}
+  .fb-sub{font-size:13px;color:var(--sub);margin-bottom:16px}
+  .fb-item{display:flex;gap:14px;padding:14px;border:1px solid var(--line);border-radius:12px;margin-bottom:12px}
+  .fb-item .f-status{margin-left:auto;flex-shrink:0}
+  .fb-item .f-title{font-size:14px;font-weight:600}
+  .fb-item .f-body{font-size:13px;color:var(--sub);margin-top:4px;white-space:pre-wrap}
+  .fb-item .f-meta{font-size:11.5px;color:#9ca3af;margin-top:6px}
+  .fb-badge{font-size:11px;padding:2px 9px;border-radius:999px;font-weight:600;white-space:nowrap}
+  .fb-badge.pending{color:#b45309;background:#fffbeb;border:1px solid #fde68a}
+  .fb-badge.done{color:#15803d;background:#f0fdf4;border:1px solid #bbf7d0}
+  .fb-badge.reward{color:#1d4ed8;background:#eff6ff;border:1px solid #bfdbfe}
+
+  /* 官方 API 接入（引擎下拉项） */
+  .official-tag{font-size:10px;color:#fff;background:linear-gradient(135deg,#f59e0b,#f97316);border-radius:5px;padding:1px 6px;margin-left:6px;font-weight:600}
+  .official-note{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;color:var(--sub);background:#fff7ed;border:1px solid #fed7aa;border-radius:9px;padding:10px 13px;margin-top:12px}
+  .official-note b{color:#c2410c}
+</style>
+</head>
+<body data-page-node-id="Wj2R0BGbQSwzbCWyKpmEV2">
+<div id="app" data-page-node-id="lGHqImIUfUCmq1uKzWttFm">
+
+  <!-- ================= 认证页 ================= -->
+  <section id="screen-auth" data-page-node-id="e6sygQx1HgVaMPubsG9pCF">
+    <div class="blob b1" data-page-node-id="7NjZnzUlZFUqFtw22eppVA"></div><div class="blob b2" data-page-node-id="tJNMAAjZucoHv7qDBAYh0w"></div>
+    <div class="auth-card" id="authCard" data-page-node-id="RU6eIzGxLzktBs83G9EQJ5">
+      <div class="auth-brand" data-page-node-id="W941guzNEPZGXeFg4o5vNB">
+        <div class="logo" data-page-node-id="mHuGnj8jLMkoVal94Ema2d">B</div>
+        <h1 data-page-node-id="E1YMnH1c7TJNA1YZIEOXAZ">Bilingual E-Book Studio</h1>
+        <p class="slogan" data-page-node-id="7jezqAgB9Ymy6IGeqvxHVV">一键生成双语对照电子书 · 语言学习者的阅读伴侣</p>
+        <ul data-page-node-id="bO3VcraLJaWO4aC7VAndfW">
+          <li data-page-node-id="MQU0MFH8MmTHSBVVKKfk5S"><i data-page-node-id="Vwu8T2YNm0l4Rq8F7I2Wpm">✓</i>支持 txt / epub / pdf（文本型）上传解析</li>
+          <li data-page-node-id="9VYRK2dPDtppoaHfid9Vfu"><i data-page-node-id="tozFB7gDDYbEHmgfsn0o54">✓</i>多翻译引擎 · 中英日韩法德互译</li>
+          <li data-page-node-id="3pbKdmQv4xKEuuBsp2hokh"><i data-page-node-id="r5Ce15TrlehtmL3CLFlFne">✓</i>逐段上下对照排版，保留原书结构</li>
+          <li data-page-node-id="IJ5lzcixZSf0BMMdG4pGHl"><i data-page-node-id="DiyOMAayWPeWbikUycohtJ">✓</i>一键导出双语 EPUB 与 PDF</li>
+        </ul>
+      </div>
+      <div class="auth-form" data-page-node-id="PWhnLl4c0asxFPwyIN2sv0">
+        <div class="auth-tabs" data-page-node-id="k68anmBNbR8Ao5n9BY5R4b">
+          <span id="tabLogin" class="on" onclick="switchAuth('login')" data-page-node-id="T8o1eyQ61RWXDa4efYPG0I">登 录</span>
+          <span id="tabReg" onclick="switchAuth('reg')" data-page-node-id="ScsIKVuuNd4QHDmca7alNw">注 册</span>
+        </div>
+        <!-- 登录 -->
+        <form id="form-login" onsubmit="return doLogin(event)" data-page-node-id="S2N62sEnBoCYEk6o9kHpLg">
+          <div class="field" data-page-node-id="btDR9baPEsAZv09mu3u2Vy"><label data-page-node-id="DMX2YENGpPRZUniyenbK4c">邮箱</label><input id="li-email" type="text" placeholder="you@example.com" autocomplete="off" data-page-node-id="dOAId8aBBaohl9FRTm6ozS"></div>
+          <div class="field" data-page-node-id="soxWe605AsPFSzNs1wbJOQ"><label data-page-node-id="VAYbtvZA3oNQqtaRGVocNa">密码</label><input id="li-pwd" type="password" placeholder="请输入密码" data-page-node-id="1FyediHuXORJL8DBHs8MKC"></div>
+          <div class="ferr" id="li-err" data-page-node-id="5izXdSmdqbIeJ7jEACmhc8"></div>
+          <button class="btn" type="submit" data-page-node-id="ICfEzcDTNDUG2jaUpcClrN">登 录</button>
+        </form>
+        <!-- 注册 -->
+        <form id="form-reg" class="hidden" onsubmit="return doRegister(event)" data-page-node-id="lr7XzyXlZfpzI5BmyKWpjf">
+          <div class="field" data-page-node-id="bWpOGl8fwTKECjZ1ICR825"><label data-page-node-id="nI4pr95us9DraCH5TJ4BIl">邮箱</label><input id="rg-email" type="text" placeholder="you@example.com" autocomplete="off" data-page-node-id="4hXeAeVzFqQkB4IK42gfPT"></div>
+          <div class="field" data-page-node-id="1bLg8LPpsylDYQqUMVQHnQ"><label data-page-node-id="sv6esvTGlF8oCNacTNrj5O">昵称（可选）</label><input id="rg-name" type="text" placeholder="给自己起个名字" data-page-node-id="gMUl8JfAKzFGvxxSuCRCmX"></div>
+          <div class="field" data-page-node-id="j6W90UgLwzZrBtPZjnKE5Y"><label data-page-node-id="HlPuJ0V4ZNWzIks7wzMZMu">密码（至少 6 位）</label><input id="rg-pwd" type="password" placeholder="设置密码" data-page-node-id="IYU6eESExhONh1m1vciAIt"></div>
+          <div class="field" data-page-node-id="IvJ9KRYcgRRCkppZ3i9Nks"><label data-page-node-id="DkPfToPV5zy8ll1exr7M4Y">确认密码</label><input id="rg-pwd2" type="password" placeholder="再次输入密码" data-page-node-id="kr6JgQfFbbMUkvdVSgrV3R"></div>
+          <div class="ferr" id="rg-err" data-page-node-id="Tk8w8wZxCtm3gfC7WqHEKG"></div>
+          <button class="btn" type="submit" data-page-node-id="5C5xVnkQEctDYTKt3fIHUJ">创建账号</button>
+        </form>
+        <div class="demo-bar" data-page-node-id="NJ227y2KHmU6u1pFAaz2X7">
+          <span data-page-node-id="14IYw26n69lxHwWXJgcTos">体验演示账号：<b data-page-node-id="NEtXYcsTsHgSTzkDVy5gs0">demo@book.app / demo123</b></span>
+          <button type="button" onclick="fillDemo()" data-page-node-id="HRXuQikxkPeXjl0Zpm7CMo">一键填充</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 应用页 ================= -->
+  <section id="screen-app" class="hidden" data-page-node-id="ymyqyqmx1Zj8SpuGJ4QZGA">
+    <header class="topbar" data-page-node-id="h66mcanVAGVGTlqL8YCCe6">
+      <div class="inner" data-page-node-id="dH4QixAg8V7kchIQIoWfZR">
+        <div class="logo" style="width:38px;height:38px;border-radius:10px;font-size:19px" data-page-node-id="bPFYB52cH7cDYCOJRnktll">B</div>
+        <div class="brand" data-page-node-id="d0HucmS2uwbc5ri7aoROSg"><span class="brand-en" data-page-node-id="lLfbbN6wNNyxN2kF44kjsL">Bilingual E-Book Studio</span><span class="brand-short" data-page-node-id="lUUzczABsEn8SPSUAdjQtI">双语书工厂</span><small data-page-node-id="Sw72H7S4HpygCZZoCL9Hnd">双语对照电子书生成器</small></div>
+        <div class="right" data-page-node-id="bXvYC9AyhRDpL9RvVFeVnD">
+          <span class="badge-demo" data-page-node-id="7d5bPqoEpnyMrOZu8xAyvm">原型演示 · 数据仅存本机</span>
+          <button class="points-pill" onclick="goPoints()" title="查看积分明细">
+            <span class="pp-ic">⚡</span><span>积分 <b id="hPoints">0</b></span>
+          </button>
+          <button class="points-pill checkin" id="checkinBtn" onclick="doCheckin()" title="每日签到得积分">🎁 签到</button>
+          <span class="hello" data-page-node-id="uz43JJNT7UVYVCvWcrI22e">你好，<b id="hNickname" data-page-node-id="iWoJLisAiGFstYuSbApuAQ"></b></span>
+          <div class="avatar" id="hAvatar" data-page-node-id="LTnEn4VIV8TsnzdETKU79s">A</div>
+          <button class="logout" onclick="doLogout()" data-page-node-id="mYP8NxiR6JDMrBs3CnfBNt">退出</button>
+        </div>
+      </div>
+    </header>
+
+    <nav class="tabs" data-page-node-id="iIOb5Q7Ztf3RnJcSS5PhIS">
+      <div class="tab on" id="tab-up" onclick="goUpload()" data-page-node-id="Erxp8GhhjTnhjnxGSYYKFK">📤 上传新书</div>
+      <div class="tab" id="tab-shelf" onclick="goShelf()" data-page-node-id="OtBv6rQuGkDMJvqOgdofu9">📚 我的书架 · <b id="shelfCount" data-page-node-id="LmeYW1BoSEm75G5hGVuXJp">0</b></div>
+      <div class="tab" id="tab-points" onclick="goPoints()">⚡ 积分中心</div>
+      <div class="tab" id="tab-feedback" onclick="goFeedback()">💬 意见反馈</div>
+    </nav>
+
+    <main class="wrap" data-page-node-id="MTuEra68h14zJe6ej8XBvV">
+      <!-- 上传视图 -->
+      <div class="view" id="view-upload" data-page-node-id="RURgl6qMhRLCdHMJAM4gFy">
+        <div class="notice-bar">
+          <div class="notice-head">📢 公告 <span class="ndim">由管理控制台发布 · 点击条目查看完整内容</span></div>
+          <div id="noticeList"></div>
+        </div>
+        <div class="up-grid" data-page-node-id="pTTIqdpPOzBIPiyvTOWQLi">
+          <div class="panel" data-page-node-id="renimYytTKuiwwTS55f8f7">
+            <h3 data-page-node-id="rAp9l1tjil3f8gcZpKmdce">上传电子书</h3>
+            <div class="drop" id="dropZone" data-page-node-id="pYCyq4dEJVDXHDoBGwWc3o">
+              <div class="ic" data-page-node-id="otcxIVbmJatgbzpqKlBH05">⬆️</div>
+              <b data-page-node-id="ONTydAE69QDlVEbkVCFEim">点击选择，或将文件拖拽到此处</b>
+              <small data-page-node-id="ZJhJdKMHY1RIGovaGVbbhD">支持 .txt / .epub / .pdf（文本型）· 单个文件 ≤ 10MB</small>
+            </div>
+            <input type="file" id="fileInput" accept=".txt,.epub,.pdf" class="hidden" data-page-node-id="3uh7W3jPVx2OespBzHVRca">
+            <div class="file-chip hidden" id="fileChip" data-page-node-id="ofiFwFHkau3PdRzuvBaJ0O">
+              <span class="fic" data-page-node-id="rdW36VXlDv7rUku5biSGVm">📄</span>
+              <span class="fname" id="fcName" data-page-node-id="nrJL2HDyYW4d8mMlPnTO38"></span>
+              <span class="fsize" id="fcSize" data-page-node-id="9ICXUuG7nYa0SHnYiHStCI"></span>
+              <button class="fx" title="移除" onclick="clearFile()" data-page-node-id="abqctJeIM9EWR9r7n4MqbR">✕</button>
+            </div>
+            <div style="height:16px" data-page-node-id="t68nWNPkhkODYyEm0ZzY2c"></div>
+            <div class="field" data-page-node-id="Ajq2RXAKcXUlIDbg6nl8Iw"><label data-page-node-id="B3cxPt8BesHY9garHLJ6EI">目标语言</label>
+              <select id="selLang" data-page-node-id="7C6DwGtMUCWlNUokgqYBKu">
+                <option value="zh" selected data-page-node-id="sN96zar2UNIQ9bV2aVWsqO">中文（简体）</option>
+                <option value="en" data-page-node-id="5VhZ53tylc1LH1R6RFJiFp">English</option>
+                <option value="ja" data-page-node-id="PIsu4kt72Rg0qOrEZ2VYPd">日本語</option>
+                <option value="ko" data-page-node-id="vlPUnjYUiBtm3GFA6nevi2">한국어</option>
+                <option value="fr" data-page-node-id="qX1WyWturUfT4kMghBtZXR">Français</option>
+                <option value="de" data-page-node-id="nm3PALuUihF3XxIzmRAxXr">Deutsch</option>
+              </select>
+            </div>
+            <div class="field" data-page-node-id="ssyLGpzQkG0HKZi5jf9cxD"><label data-page-node-id="kOpau1hh9EWlsHFMl7eEVq">书名（可选，缺省取文件名）</label><input id="inTitle" type="text" placeholder="自动从文件读取，可修改" data-page-node-id="ajSWY5XgZ8wiOwByswJC8A"></div>
+            <div class="field"><label>翻译引擎 <span id="engineStatus" class="engine-status off">未接入</span></label>
+              <select id="selEngine" onchange="switchEngine()">
+                <option value="official">官方引擎（消耗积分）</option>
+                <option value="baidu" selected>百度翻译</option>
+                <option value="youdao">有道智云</option>
+                <option value="deepl">DeepL</option>
+              </select>
+            </div>
+            <div id="engineKeys" class="engine-keys"></div>
+            <div id="officialPanel" class="official-note hidden">⚡ <span>使用<b>官方引擎</b>将消耗积分：按翻译实际消耗的 token 数量扣除积分（当前 <b>1 积分 = 1000 tokens</b>）。无需填写任何 API Key，适合不想自行申请密钥的用户。</span></div>
+            <div class="engine-note">🔧 <span class="en-title">两种接入方式</span>官方引擎（消耗积分，免申请）<span class="en-dot">｜</span>自带 API Key（百度 / 有道 / DeepL 官网免费申请）<br>密钥仅保存在本机浏览器（原型演示用）<span class="en-dot">·</span>排版：逐段上下对照</div>
+            <div style="height:14px" data-page-node-id="CFsRVFTA0Tqrjua8JqWASM"></div>
+            <button class="btn" id="btnGen" onclick="startGeneration()" disabled data-page-node-id="OYU2r3UzDzbO3XCo2rkf9b">开始生成双语书</button>
+          </div>
+          <div data-page-node-id="I1G1tI5aIEWCHyFuNzrsER">
+            <div class="side-card" data-page-node-id="EQldElJ4FrKVklzmllQOwn">
+              <h4 data-page-node-id="ybhWXud0Zd9pxVvOSIsDtX">⚡ 快速体验</h4>
+              <p data-page-node-id="l28AIgeumEQHZmSUMsLij1">不想准备文件？直接使用内置示例书，一键跑通「上传 → 解析 → 翻译 → 排版 → 导出」全流程。</p>
+              <div class="sample-row" data-page-node-id="TdYFi6ZEBFsO5fhFFOrUNc">
+                <div class="mini-cover" data-page-node-id="QaskCVlriQHpqH7jGZbxyC">P</div>
+                <div class="si" data-page-node-id="GJAnlOgIIyORlNiDPoksvx"><b data-page-node-id="9bfXguIjRQbbF6HSrbUlQY">Pride and Prejudice</b><small data-page-node-id="yJS0XAjLginghfiZdY2m9t">Jane Austen · 英→中 · 10 段</small></div>
+                <button class="link-btn" onclick="useSample()" data-page-node-id="SZJwP3ES9bz2QKMQqcWB5F">使用示例书</button>
+              </div>
+            </div>
+            <div class="side-card" data-page-node-id="DEXhEhhz8EHVOqrEheToUv">
+              <h4 data-page-node-id="vYDHQkIPsWHHCEIujX95Od">ℹ️ 使用说明</h4>
+              <p data-page-node-id="gZLd3sQuY3BDaJ5IvaGHxC">① 上传后将自动完成解析、分句与逐段翻译，全程约 10 秒（原型模拟）；② 长段落按句法边界自动切分，保证对照不乱；③ 扫描型 PDF 无法提取文本，暂不支持；④ 同一本书重复处理命中翻译缓存，速度更快。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 进度视图 -->
+      <div class="view hidden" id="view-processing" data-page-node-id="upduO8VystNtXQfBby3B2v">
+        <div class="proc-card" data-page-node-id="rrnWcyltj9bCp8XmHVDxPJ">
+          <h3 id="procTitle" data-page-node-id="P2QSgTZUYRea2BVNVSw8pa">正在生成「…」</h3>
+          <p class="sub" data-page-node-id="nAOdSY2GohMZ3YfzCDZ3Ok">请勿关闭页面 · 原型环境模拟完整处理管线</p>
+          <ul class="steps" data-page-node-id="Gg7P5PJrrnWa7JrC6bLcTg">
+            <li class="step" id="st0" data-page-node-id="TZdOOYtuKUdGXkEdfMKUI5"><span class="dot" data-page-node-id="elCAM8k0YsVAhPyL1d4nnz">1</span>文件上传与校验<span class="extra" id="ex0" data-page-node-id="OFEABq3Hvh0gR0mOrIYcLg"></span></li>
+            <li class="step" id="st1" data-page-node-id="I7Q6Udl5AjQzRGCgfFBNOu"><span class="dot" data-page-node-id="qKrpVIOtpaT6SeAfc6Cd3O">2</span>内容解析与分句<span class="extra" id="ex1" data-page-node-id="tz9rF0eOmAVacjGU0omqYk"></span></li>
+            <li class="step" id="st2" data-page-node-id="WGLK2fBPCQ1iqHAjtuCC7q"><span class="dot" data-page-node-id="eHPNVfl35X7jQCmZDWDD5R">3</span>逐段翻译（<span id="st2label">百度翻译</span>）<span class="extra" id="ex2" data-page-node-id="JadCf1TE7YTDfZdY5IPixX"></span></li>
+            <li class="step" id="st3" data-page-node-id="6AIw99eE9XCasRhzyNfrZT"><span class="dot" data-page-node-id="RLnIFU8HR0ssDJbh9fpvaB">4</span>双语排版与 EPUB / PDF 生成<span class="extra" id="ex3" data-page-node-id="mjgGOoVUOjLhM1jF02BvRn"></span></li>
+          </ul>
+          <div class="bar" data-page-node-id="GDG2KSKfaNxLACl7CYgrns"><i id="barFill" data-page-node-id="PsfDXdX0WcGmAFm4ybJi2h"></i></div>
+          <div class="bar-label" data-page-node-id="6W7WWJTEkQwVDErhNOHy49"><span id="barPct" data-page-node-id="wqc0GAmBy2tZDEHoGGGFDD">0%</span><span id="barHint" data-page-node-id="0YotGXpoj3edNSMzpDC0QX">准备中…</span></div>
+        </div>
+      </div>
+
+      <!-- 结果视图 -->
+      <div class="view hidden" id="view-result" data-page-node-id="UJwbRcz28EE26IVCiZxzTr">
+        <div class="res-grid" data-page-node-id="mBKuX3bdOA0Gs2VrP1teDx">
+          <div class="panel res-card" data-page-node-id="MFSuTPo1VAWXBen4K0Cb64">
+            <div class="ok-icon" data-page-node-id="3qQs6DSUhLEbolP6hglBs5">✓</div>
+            <h3 id="resTitle" data-page-node-id="fCmzQGZsWkTO3RC9P2fkr7"></h3>
+            <p class="meta" id="resMeta" data-page-node-id="lWzrk9Gym5GveAw1EyqikI"></p>
+            <div style="height:14px" data-page-node-id="baiMXKpUflxHYBtgYwO3tP"></div>
+            <div class="stat" data-page-node-id="h7wsy43RsV9sjlfxYBx01J"><span data-page-node-id="P4fi0rZ3D4EoStztldvXjQ">翻译单元</span><b id="rsSeg" data-page-node-id="tjr10b8YBP85cG5vD02lOB"></b></div>
+            <div class="stat" data-page-node-id="caUXgrBdpefBJroggpWRgT"><span data-page-node-id="tFErJbaeCOxIAuiASpH6Jf">失败回退（保留原文）</span><b id="rsFail" data-page-node-id="DWW3fSMDy1mKDmOpIiQ229"></b></div>
+            <div class="stat" data-page-node-id="Z60mbEUhmggIitK4DEDek5"><span data-page-node-id="xxxIm7i4UsHlB951OAAQY3">生成耗时</span><b id="rsTime" data-page-node-id="jRESGHxi8LvStDdeMEE6HW"></b></div>
+            <div class="stat" data-page-node-id="2E7lZ1IL6rw3mExbAsKSZy"><span data-page-node-id="2MJV9sWddwbPxn3Xc9kyqU">翻译引擎</span><b id="rsEngine" data-page-node-id="J0uJsWIX3RktEgPbsuRRWq"></b></div>
+            <div class="dl-row" data-page-node-id="B8w40CAaAPqKhqBIRSvLkT">
+              <div class="dl-btn epub" onclick="downloadEpub()" data-page-node-id="hdvo8a7vmTOUzxTgSarVHn">⬇ 下载 EPUB</div>
+              <div class="dl-btn pdf" onclick="downloadPdf()" data-page-node-id="GcW6vXA8GnY3a9tBhzm2cT">⬇ 下载 PDF</div>
+            </div>
+            <div class="action-row" data-page-node-id="p1geNBPIyE3Ffwf330rCFn">
+              <button class="btn btn-outline" onclick="goShelf()" data-page-node-id="E7pj3BXm7EzYTE4m4vHDdX">查看我的书架</button>
+              <button class="btn btn-ghost" onclick="goUpload()" data-page-node-id="mAyJICbPBL83xdfRvjJULN">再生成一本</button>
+            </div>
+          </div>
+          <div class="panel preview-card" data-page-node-id="9LZNRaD9puuo0sAJrBjFQW">
+            <h4 data-page-node-id="acw1QGCVJiQDxcqqdhTXNW">双语效果预览</h4>
+            <p class="pnote" data-page-node-id="rdEFf0NgmvbsXU0Aeean4C">逐段上下对照 · 浅色底纹为译文（实际成品中保留原书章节结构）</p>
+            <div id="resPreview" data-page-node-id="8RWV8qSVjfs2SEeCHu6bGX"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 书架视图 -->
+      <div class="view hidden" id="view-shelf" data-page-node-id="I7Yk1yiZAFelZhadD5NU6O">
+        <div class="shelf" id="shelfList" data-page-node-id="uCB1LEOQBvZ6TU7gZJ95Ke"></div>
+      </div>
+
+      <!-- 积分中心视图 -->
+      <div class="view hidden" id="view-points">
+        <div class="points-hero">
+          <div class="ph-left">
+            <div class="ph-label">当前积分余额</div>
+            <div class="ph-balance">⚡ <b id="ptsBalance">0</b></div>
+            <div class="ph-sub">每 <b id="ptsRate">1</b> 积分可兑换 <b id="ptsToken">1000</b> tokens 官方翻译额度</div>
+          </div>
+          <div class="ph-right">
+            <button class="btn" onclick="doCheckin()" id="ptsCheckinBtn">🎁 每日签到 · 领积分</button>
+            <div class="ph-checkin-tip" id="checkinTip">今天还没签到哦，签到可得 <b id="ptsCheckinReward">10</b> 积分</div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:16px">
+          <h3>积分明细</h3>
+          <div class="pts-tabs">
+            <button class="pts-tab on" data-v="all" onclick="ptsFilter('all',this)">全部</button>
+            <button class="pts-tab" data-v="earn" onclick="ptsFilter('earn',this)">获得</button>
+            <button class="pts-tab" data-v="spend" onclick="ptsFilter('spend',this)">消耗</button>
+          </div>
+          <div id="ptsList"></div>
+        </div>
+      </div>
+
+      <!-- 意见反馈视图 -->
+      <div class="view hidden" id="view-feedback">
+        <div class="panel">
+          <h3>意见反馈</h3>
+          <p class="fb-sub">遇到问题或有改进建议？欢迎提交反馈，帮助我们做得更好。优质反馈可获得积分奖励。</p>
+          <div class="field"><label>反馈类型</label>
+            <select id="fbType">
+              <option value="bug">🐛 Bug 提交</option>
+              <option value="suggest">💡 功能建议</option>
+              <option value="experience">😊 使用体验</option>
+              <option value="other">📝 其他</option>
+            </select>
+          </div>
+          <div class="field"><label>反馈标题</label><input id="fbTitle" type="text" placeholder="一句话概括你的问题或建议"></div>
+          <div class="field"><label>详细描述</label><textarea id="fbBody" style="width:100%;min-height:120px;border:1px solid #cbd5e1;border-radius:9px;padding:10px 12px;font-size:14px;font-family:inherit;resize:vertical" placeholder="请尽量详细地描述问题复现步骤、建议内容等…"></textarea></div>
+          <div class="field"><label>联系方式（选填）</label><input id="fbContact" type="text" placeholder="邮箱 / 微信，方便我们进一步沟通"></div>
+          <button class="btn" onclick="submitFeedback()">提交反馈</button>
+        </div>
+        <div class="panel" style="margin-top:16px">
+          <h3>我的反馈记录</h3>
+          <div id="myFeedbackList"></div>
+        </div>
+      </div>
+
+      <!-- 详情视图 -->
+      <div class="view hidden" id="view-detail" data-page-node-id="v6hff9BjHpzCP1Y9vZyB5f">
+        <button class="back-link" onclick="goShelf()" data-page-node-id="UkSEZxVwJyl4F5OoaMQgSQ">← 返回书架</button>
+        <div class="res-grid" data-page-node-id="dnb1ddUJaCitfNkqVrgX3s">
+          <div class="panel res-card" data-page-node-id="pt1EwdoKVaPEcwB1MRhJ4d">
+            <h3 id="dtTitle" data-page-node-id="Z93PlF1XLCW6h1VT40Twmw"></h3>
+            <p class="meta" id="dtMeta" data-page-node-id="mVvxbCAgPzJ0kpo3x0uZJm"></p>
+            <div style="height:14px" data-page-node-id="zaEkCvRnNt9JUbBQlk59Kt"></div>
+            <div class="stat" data-page-node-id="uyIsMi2uAcRL4GZ0fmjk2p"><span data-page-node-id="es8qt9hLYW4Yxi20HCkcOP">翻译单元</span><b id="dtSeg" data-page-node-id="G8qxhgU46nYmBcUHbNSX8C"></b></div>
+            <div class="stat" data-page-node-id="rnAg2MfSoicCM5qI7r5FhD"><span data-page-node-id="otNHqNv1nljK7twFdJfTcp">失败回退（保留原文）</span><b id="dtFail" data-page-node-id="ThFQRc3uw50orAPqIoHnwT"></b></div>
+            <div class="stat" data-page-node-id="90GzVHFOn6ZI7EFm8Zrewg"><span data-page-node-id="t1Ywne3WUbH1LADDcGQIYu">生成时间</span><b id="dtTime" data-page-node-id="AhFs1dcqoOR00OzUX8OMbF"></b></div>
+            <div class="dl-row" data-page-node-id="I4wKUnuBWDDYtnLAqInpCV">
+              <div class="dl-btn epub" onclick="downloadEpub()" data-page-node-id="Ey7C20nCcqe0qLyyj71llR">⬇ 下载 EPUB</div>
+              <div class="dl-btn pdf" onclick="downloadPdf()" data-page-node-id="1YAcxSuYUnFDJXxTHMhB8q">⬇ 下载 PDF</div>
+            </div>
+            <div class="action-row" data-page-node-id="P7qnCxBmAHJ24fG1Mguhxw">
+              <button class="btn btn-ghost" style="color:var(--err);border-color:#fecaca" onclick="askDelete()" data-page-node-id="q7wIq228wn41B6idS7SsDG">删除这本书</button>
+            </div>
+          </div>
+          <div class="panel preview-card" data-page-node-id="57p3QUPYYkYaHBhfsPD6AK">
+            <h4 data-page-node-id="oRr7e84B6OxnRFuZBFUVYn">双语内容预览</h4>
+            <p class="pnote" data-page-node-id="87bNWQGKuzqvlB9iPJqDvn">可再次下载，随时重新获取成品文件</p>
+            <div id="dtPreview" data-page-node-id="98dCVkuVHWG90UZ7zZn4Xo"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </section>
+</div>
+
+<!-- 删除确认弹窗 -->
+<div class="modal-wrap hidden" id="modalDel" data-page-node-id="zzeQrp0E0RQm6RI67vYoin">
+  <div class="modal" data-page-node-id="a2n1JtLWZQpHmEIm0M4EYy">
+    <h4 data-page-node-id="1JAlRU7GKKs6UFCytCjp8m">删除这本书？</h4>
+    <p id="modalDelText" data-page-node-id="8dOgzGXfPBmOZv93z0qEOb">删除后将从书架移除，成品文件不可恢复。</p>
+    <div class="m-row" data-page-node-id="U03qQHh7E7wqZhqA5eh0bc">
+      <button class="btn btn-ghost" onclick="closeModal()" data-page-node-id="NKXqBakaftGPmgUakcTNys">取 消</button>
+      <button class="btn btn-danger" onclick="confirmDelete()" data-page-node-id="Yg0xBPaWA0QY2gyA2PRL0F">确 定删除</button>
+    </div>
+  </div>
+</div>
+
+<!-- 公告详情弹窗 -->
+<div class="modal-wrap hidden" id="modalNotice">
+  <div class="modal" style="width:min(92vw,480px)">
+    <h4 id="mnTitle"></h4>
+    <p id="mnMeta" style="font-size:12px"></p>
+    <div id="mnBody" style="font-size:13.5px;color:var(--ink);line-height:1.8;background:#f8fafc;border:1px solid var(--line);border-radius:9px;padding:12px 14px;margin-top:6px;white-space:pre-wrap"></div>
+    <div class="m-row">
+      <button class="btn btn-ghost" onclick="closeModal()" style="flex:1">关 闭</button>
+    </div>
+  </div>
+</div>
+
+<div id="toasts" data-page-node-id="1u7f7sGx1JyL40NkLDu4I9"></div>
+<div id="printArea" data-page-node-id="VUJkAR2C4J25icx8ZMnnNJ"></div>
+
+<script>
+/* ================= 工具 ================= */
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+function toast(msg, ms){
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  $('toasts').appendChild(t);
+  setTimeout(()=>{ t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(()=>t.remove(), 320); }, ms || 2400);
+}
+function fmtSize(b){ return b >= 1048576 ? (b/1048576).toFixed(1)+' MB' : Math.max(1, Math.round(b/1024))+' KB'; }
+function fmtDate(ts){ const d = new Date(ts); const p = n => String(n).padStart(2,'0');
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes()); }
+const LANG_NAME = { zh:'中文（简体）', en:'英语', ja:'日语', ko:'韩语', fr:'法语', de:'德语' };
+const LANG_SHORT = { zh:'中', en:'英', ja:'日', ko:'韩', fr:'法', de:'德' };
+
+/* ================= 示例书数据（原型内置） ================= */
+const SAMPLE_BOOK = {
+  title: 'Pride and Prejudice', author: 'Jane Austen',
+  seg: [
+    { s:'It is a truth universally acknowledged, that a single man in possession of a good fortune, must be in want of a wife.',
+      t:'凡是有钱的单身汉，总想娶位太太，这已经成了一条举世公认的真理。' },
+    { s:'However little known the feelings or views of such a man may be on his first entering a neighbourhood, this truth is so well fixed in the minds of the surrounding families, that he is considered as the rightful property of some one or other of their daughters.',
+      t:'不管这样一个人的心情或见解在初进一个地区时多么不为人所知，这条真理却总是牢牢记在周围各家各户的心里，他被看作是他们某位女儿的准财产。' },
+    { s:'My dear Mr. Bennet, said his lady to him one day, have you heard that Netherfield Park is let at last?',
+      t:'我亲爱的班纳特先生，他太太有一天对他说，你听说了吗，尼日斐花园终于租出去了？' },
+    { s:'Mr. Bennet replied that he had not.',
+      t:'班纳特先生回答说他还没有听说。' },
+    { s:'But it is announced by Mrs. Long, for she was there this morning in preference to that poor woman next door, and slipped it in to me, sitting beside me as such a secret.',
+      t:'可洛女士已经宣布了这个消息。她今天上午到这里来，没有去隔壁那家穷人那里，坐在我身边像说悄悄话一样告诉了我。' },
+    { s:'What is his name? asked Mr. Bennet.',
+      t:'他叫什么名字？班纳特先生问。' },
+    { s:'Bingley.', t:'宾利。' },
+    { s:'Is he married or single, my dear?',
+      t:'他是已婚还是单身，我亲爱的？' },
+    { s:'Every one of my girls may have him, for all that I know. First come first served.',
+      t:'据我所知，我的五个女儿谁都可以嫁给他。先来先得。' },
+    { s:'But I assure you I am by no means so eager as you fancy, to get him for any of them.',
+      t:'可我向你保证，我一点也不像你想象的那样迫切地想让任何一个女儿嫁给他。' }
+  ]
+};
+const SAMPLE_BOOK2 = {
+  title: 'The Little Prince', author: 'Antoine de Saint-Exupéry',
+  seg: [
+    { s:'You are forever responsible for what you have tamed.', t:'你要永远对你所驯养的东西负责。' },
+    { s:'What is essential is invisible to the eye.', t:'真正重要的东西，用眼睛是看不见的。' },
+    { s:'It is only with the heart that one can see rightly.', t:'只有用心才能看清。' }
+  ]
+};
+const FAIL_INDEX = 2; // 演示：第 3 段模拟翻译失败 → 保留原文
+
+/* ================= 状态 ================= */
+const S = { user:null, books:[], file:null, current:null };
+let procCancel = false;
+
+function seed(){
+  let users = store.get('bes_users', null);
+  if(!users){
+    users = [{ id:1, email:'demo@book.app', pwd:'demo123', nickname:'演示用户' }];
+    store.set('bes_users', users);
+    const demoBooks = [
+      mkBook(SAMPLE_BOOK, 'zh', '2026-09-20 15:42'.replace(' ','T'), 74),
+      mkBook(SAMPLE_BOOK2, 'zh', '2026-09-15 10:08'.replace(' ','T'), 41)
+    ];
+    store.set('bes_books_demo', demoBooks);
+  }
+}
+function mkBook(sample, tgt, createdStr, seconds, engine){
+  const segs = sample.seg.map((x,i)=>({ s:x.s, t: tgt==='zh' ? x.t : demoText(tgt, i+1), failed: tgt==='zh' && i===FAIL_INDEX }));
+  return {
+    id: Date.now() + Math.floor(Math.random()*1000),
+    title: sample.title, author: sample.author,
+    srcLang:'en', tgtLang: tgt,
+    segCount: segs.length,
+    failedSegs: segs.filter(x=>x.failed).length,
+    createdAt: createdStr ? new Date(createdStr).getTime() : Date.now(),
+    seconds, engine: engine || '百度翻译', seg: segs
+  };
+}
+function demoText(tgt, i){ return '〔' + LANG_NAME[tgt] + ' · 演示译文〕这是第 ' + i + ' 段的双语对照演示文本，正式环境此处为翻译引擎返回内容。'; }
+
+function loadBooks(){
+  if(S.user && S.user.email === 'demo@book.app') S.books = store.get('bes_books_demo', []);
+  else S.books = store.get('bes_books_' + S.user.email, []);
+}
+function saveBooks(){
+  if(S.user.email === 'demo@book.app') store.set('bes_books_demo', S.books);
+  else store.set('bes_books_' + S.user.email, S.books);
+  $('shelfCount').textContent = S.books.length;
+}
+
+/* ================= 视图切换 ================= */
+function showScreen(name){
+  $('screen-auth').classList.toggle('hidden', name !== 'auth');
+  $('screen-app').classList.toggle('hidden', name !== 'app');
+  window.scrollTo(0,0);
+}
+function showView(name){
+  ['upload','processing','result','shelf','detail','points','feedback'].forEach(v=>{
+    $('view-'+v).classList.toggle('hidden', v !== name);
+  });
+  $('tab-up').classList.toggle('on', name==='upload');
+  $('tab-shelf').classList.toggle('on', name==='shelf');
+  $('tab-points').classList.toggle('on', name==='points');
+  $('tab-feedback').classList.toggle('on', name==='feedback');
+  window.scrollTo(0,0);
+}
+function goUpload(){ showView('upload'); }
+function goShelf(){ renderShelf(); showView('shelf'); }
+function goPoints(){ renderPoints(); showView('points'); }
+function goFeedback(){ renderMyFeedback(); showView('feedback'); }
+
+/* ================= 认证 ================= */
+function switchAuth(mode){
+  const login = mode === 'login';
+  $('tabLogin').classList.toggle('on', login);
+  $('tabReg').classList.toggle('on', !login);
+  $('form-login').classList.toggle('hidden', !login);
+  $('form-reg').classList.toggle('hidden', login);
+  $('li-err').textContent = ''; $('rg-err').textContent = '';
+}
+function fillDemo(){
+  $('li-email').value = 'demo@book.app'; $('li-pwd').value = 'demo123';
+  $('li-err').textContent = '';
+  toast('已填充演示账号，点击登录即可体验');
+}
+function doLogin(e){
+  e.preventDefault();
+  const email = $('li-email').value.trim(), pwd = $('li-pwd').value;
+  if(!email || !pwd){ $('li-err').textContent = '请输入邮箱和密码'; return false; }
+  const users = store.get('bes_users', []);
+  const u = users.find(x => x.email.toLowerCase() === email.toLowerCase() && x.pwd === pwd);
+  if(!u){
+    $('li-err').textContent = '邮箱或密码错误';
+    $('authCard').classList.remove('shake'); void $('authCard').offsetWidth; $('authCard').classList.add('shake');
+    return false;
+  }
+  enterApp(u);
+  return false;
+}
+function doRegister(e){
+  e.preventDefault();
+  const email = $('rg-email').value.trim(), name = $('rg-name').value.trim(),
+        pwd = $('rg-pwd').value, pwd2 = $('rg-pwd2').value;
+  const err = $('rg-err');
+  if(!/.+@.+\..+/.test(email)){ err.textContent = '请输入有效的邮箱地址'; return false; }
+  if(pwd.length < 6){ err.textContent = '密码至少需要 6 位'; return false; }
+  if(pwd !== pwd2){ err.textContent = '两次输入的密码不一致'; return false; }
+  const users = store.get('bes_users', []);
+  if(users.some(x => x.email.toLowerCase() === email.toLowerCase())){ err.textContent = '该邮箱已注册，请直接登录'; return false; }
+  const u = { id: Date.now(), email, pwd, nickname: name || email.split('@')[0] };
+  users.push(u); store.set('bes_users', users);
+  enterApp(u);
+  return false;
+}
+function enterApp(u){
+  S.user = { id:u.id, email:u.email, nickname:u.nickname };
+  store.set('bes_session', S.user);
+  $('hNickname').textContent = u.nickname;
+  $('hAvatar').textContent = (u.nickname || 'U').slice(0,1).toUpperCase();
+  loadBooks(); saveBooks();
+  // 新用户注册奖励积分
+  if(store.get(getPointsKey(), null) === null){
+    setPoints(50);
+    addPointsLog('earn', '新用户注册奖励', '欢迎使用双语书工厂', '+50');
+  }
+  updatePointsUI();
+  showScreen('app'); goUpload();
+  toast('欢迎回来，' + u.nickname);
+}
+function doLogout(){
+  S.user = null; S.file = null; S.current = null;
+  store.set('bes_session', null);
+  $('li-pwd').value = ''; $('li-err').textContent = '';
+  showScreen('auth');
+  toast('已退出登录');
+}
+
+/* ================= 翻译引擎配置（可主动切换 · 密钥仅存本机） ================= */
+const ENGINES = {
+  official:{ name:'官方引擎（积分）', official:true, fields:[] },
+  baidu:  { name:'百度翻译', fields:[ {k:'app_id',   label:'App ID',    type:'text',     ph:'百度智能云 应用ID'},
+                                      {k:'app_key',  label:'App Key',   type:'password', ph:'百度智能云 应用Key'} ] },
+  youdao: { name:'有道智云', fields:[ {k:'app_key',  label:'appKey',    type:'text',     ph:'有道智云 appKey'},
+                                      {k:'secret_key', label:'secretKey', type:'password', ph:'有道智云 secretKey'} ] },
+  deepl:  { name:'DeepL',   fields:[ {k:'api_key',  label:'API Key',   type:'password', ph:'DeepL Auth Key'} ] }
+};
+function getEngineCfg(){ return store.get('bes_engine', { engine:'baidu', keys:{} }); }
+function renderEngineKeys(){
+  const cfg = getEngineCfg();
+  const eng = ENGINES[cfg.engine] || ENGINES.baidu;
+  if(eng.official){
+    $('engineKeys').innerHTML = '';
+    $('engineKeys').classList.add('hidden');
+    $('officialPanel').classList.remove('hidden');
+    updateEngineStatus();
+    return;
+  }
+  $('officialPanel').classList.add('hidden');
+  $('engineKeys').classList.remove('hidden');
+  $('engineKeys').innerHTML = eng.fields.map(f =>
+    '<div class="ek"><label>' + f.label + '</label>'
+    + '<input id="ek_' + f.k + '" type="' + f.type + '" placeholder="' + f.ph + '" value="' + esc(cfg.keys[f.k] || '') + '"></div>'
+  ).join('')
+  + '<div class="ek-clear"><button class="link-btn" type="button" onclick="clearEngineKeys()">清除已保存的密钥</button></div>';
+  eng.fields.forEach(f => { const el = $('ek_' + f.k); if(el) el.addEventListener('input', persistEngineKeys); });
+  updateEngineStatus();
+}
+function persistEngineKeys(){
+  const cfg = getEngineCfg();
+  (ENGINES[cfg.engine] || ENGINES.baidu).fields.forEach(f => { cfg.keys[f.k] = ($('ek_' + f.k) ? $('ek_' + f.k).value.trim() : ''); });
+  store.set('bes_engine', cfg);
+  updateEngineStatus();
+}
+function switchEngine(){
+  const cfg = getEngineCfg();
+  cfg.engine = $('selEngine').value;
+  store.set('bes_engine', cfg);
+  renderEngineKeys();
+  toast('已切换引擎：' + (ENGINES[cfg.engine] || ENGINES.baidu).name);
+}
+function clearEngineKeys(){
+  const cfg = getEngineCfg();
+  cfg.keys = {};
+  store.set('bes_engine', cfg);
+  renderEngineKeys();
+  toast('API 密钥已清除，引擎状态：未接入');
+}
+function updateEngineStatus(){
+  const el = $('engineStatus'); if(!el) return;
+  const cfg = getEngineCfg();
+  const eng = ENGINES[cfg.engine] || ENGINES.baidu;
+  let ok, label;
+  if(eng.official){
+    ok = getPoints() > 0;
+    label = ok ? '可用（积分）' : '积分不足';
+  } else {
+    ok = engineReady();
+    label = ok ? '已接入' : '未接入';
+  }
+  el.textContent = label;
+  el.className = 'engine-status ' + (ok ? 'ok' : 'off');
+}
+function engineReady(){
+  const cfg = getEngineCfg();
+  const eng = ENGINES[cfg.engine] || ENGINES.baidu;
+  if(eng.official) return getPoints() > 0;
+  return eng.fields.every(f => (cfg.keys[f.k] || '').length > 0);
+}
+function isOfficialEngine(){ return (ENGINES[getEngineCfg().engine] || ENGINES.baidu).official; }
+
+/* ================= 公告 ================= */
+const NOTICE_TYPES = { maintenance:'维护通知', update:'版本更新', system:'系统通知' };
+const NOTICES = [
+  { id:1, type:'maintenance', title:'计划维护：2026-09-28（周日）23:00–24:00 平台整体升级', date:'2026-09-27 18:30',
+    body:'为提升双语书生成服务的稳定性，平台将于 2026 年 9 月 28 日（周日）23:00 至 24:00 进行整体升级。\n\n维护期间：文件上传与翻译生成将临时不可用；已生成的双语书可正常查看与下载。\n\n由此带来的不便敬请谅解，感谢支持。' },
+  { id:2, type:'update', title:'新功能：PDF 导出支持自定义页面尺寸与页眉页脚', date:'2026-09-25 10:12',
+    body:'双语书导出模块已升级：PDF 导出现支持选择页面尺寸（A5 / A4 / 6 英寸）与自定义页眉页脚文字（书名、页码）。\n\n默认排版仍为「逐段上下对照」，升级对本版本起自动生效，无需额外配置。' },
+  { id:3, type:'system', title:'安全提示：请妥善保管您的 API Key，平台不保存您的任何密钥', date:'2026-09-20 09:00',
+    body:'本平台采用 BYOK 模式：翻译使用您自行申请的 API Key，密钥仅在本次翻译请求中生效，服务端不存储、不写入日志。\n\n请勿将密钥分享给他人；如怀疑密钥泄露，请在引擎官网立即停用并重新申请。' }
+];
+function renderNotices(){
+  const list = NOTICES.slice().sort((a,b)=>b.date.localeCompare(a.date));
+  $('noticeList').innerHTML = list.length ? list.map(n=>
+    '<div class="notice-item" onclick="openNotice('+n.id+')">'+
+      '<span class="ntag '+n.type+'">'+NOTICE_TYPES[n.type]+'</span>'+
+      '<div><div class="nt">'+n.title+'</div><div class="nd">'+n.date+'</div></div>'+
+    '</div>'
+  ).join('') : '<div class="notice-empty">暂无公告</div>';
+}
+function openNotice(id){
+  const n = NOTICES.find(x=>x.id===id); if(!n) return;
+  $('mnTitle').textContent = n.title;
+  $('mnMeta').innerHTML = '<span class="ntag '+n.type+'" style="margin-right:8px">'+NOTICE_TYPES[n.type]+'</span>发布于 '+n.date;
+  $('mnBody').textContent = n.body;
+  $('modalNotice').classList.remove('hidden');
+}
+
+/* ================= 积分体系（v1.4 扩展） ================= */
+// 兑换比例：后台可配置，默认 1 积分 = 1000 tokens
+const POINT_CFG = { rate:1, tokenPerPoint:1000, checkinReward:10 };
+function getPointsKey(){ return 'bes_points_' + (S.user ? S.user.email : 'guest'); }
+function getPoints(){ return store.get(getPointsKey(), 0); }
+function setPoints(v){ store.set(getPointsKey(), v); updatePointsUI(); }
+function getPointsLog(){ return store.get(getPointsKey()+'_log', []); }
+function getCheckinKey(){ return 'bes_checkin_' + (S.user ? S.user.email : 'guest'); }
+function todayStr(){ const d=new Date(); const p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+
+function updatePointsUI(){
+  const v = getPoints();
+  const hp = $('hPoints'); if(hp) hp.textContent = v;
+  const pb = $('ptsBalance'); if(pb) pb.textContent = v;
+  const pr = $('ptsRate'); if(pr) pr.textContent = POINT_CFG.rate;
+  const pt = $('ptsToken'); if(pt) pt.textContent = POINT_CFG.tokenPerPoint;
+  const cr = $('ptsCheckinReward'); if(cr) cr.textContent = POINT_CFG.checkinReward;
+  updateCheckinUI();
+  updateEngineStatus();
+}
+function addPointsLog(type, title, desc, val){
+  const log = getPointsLog();
+  log.unshift({ type, title, desc, val, time: Date.now() });
+  store.set(getPointsKey()+'_log', log);
+}
+function earnPoints(n, title, desc){
+  setPoints(getPoints() + n);
+  addPointsLog('earn', title, desc, '+' + n);
+}
+function spendPoints(n, title, desc){
+  setPoints(Math.max(0, getPoints() - n));
+  addPointsLog('spend', title, desc, '-' + n);
+}
+function updateCheckinUI(){
+  const done = store.get(getCheckinKey(), '') === todayStr();
+  const btn = $('checkinBtn'), pbtn = $('ptsCheckinBtn');
+  if(btn){ btn.textContent = done ? '✅ 已签到' : '🎁 签到'; btn.classList.toggle('done', done); }
+  if(pbtn){ pbtn.textContent = done ? '✅ 今日已签到' : '🎁 每日签到 · 领积分'; pbtn.disabled = done; }
+  if($('checkinTip')) $('checkinTip').innerHTML = done ? '今日已签到，明天再来吧～' : '今天还没签到哦，签到可得 <b>'+POINT_CFG.checkinReward+'</b> 积分';
+}
+function doCheckin(){
+  if(!S.user){ toast('请先登录'); return; }
+  if(store.get(getCheckinKey(), '') === todayStr()){ toast('今天已经签过到了，明天再来吧'); return; }
+  store.set(getCheckinKey(), todayStr());
+  earnPoints(POINT_CFG.checkinReward, '每日签到', '连续签到奖励', POINT_CFG.checkinReward);
+  updateCheckinUI();
+  toast('签到成功，获得 ' + POINT_CFG.checkinReward + ' 积分！');
+  renderPoints();
+}
+function calcOfficialCost(segCount){
+  // 模拟：每段约消耗 350 tokens，向上取整到积分
+  const tokens = segCount * 350;
+  return Math.max(1, Math.ceil(tokens / POINT_CFG.tokenPerPoint));
+}
+let ptsFilterType = 'all';
+function ptsFilter(v, el){
+  ptsFilterType = v;
+  document.querySelectorAll('.pts-tab').forEach(t=>t.classList.toggle('on', t===el));
+  renderPoints();
+}
+function renderPoints(){
+  updatePointsUI();
+  const list = getPointsLog().filter(x => ptsFilterType==='all' || x.type===ptsFilterType);
+  const box = $('ptsList');
+  if(!list.length){
+    box.innerHTML = '<div class="pts-empty">暂无' + (ptsFilterType==='all'?'':'相关') + '积分记录</div>';
+    return;
+  }
+  const icons = { earn:'➕', spend:'➖' };
+  box.innerHTML = list.map(x =>
+    '<div class="pts-item"><div class="p-ic">' + (x.type==='earn'?'🪙':'💸') + '</div>'
+    + '<div class="p-body"><div class="p-title">' + esc(x.title) + '</div><div class="p-desc">' + esc(x.desc) + ' · ' + fmtDate(x.time) + '</div></div>'
+    + '<div class="p-val ' + x.type + '">' + x.val + '</div></div>'
+  ).join('');
+}
+
+/* ================= 意见反馈（v1.4 扩展） ================= */
+function getFeedbackKey(){ return 'bes_feedback_' + (S.user ? S.user.email : 'guest'); }
+function getFeedback(){ return store.get(getFeedbackKey(), []); }
+function submitFeedback(){
+  if(!S.user){ toast('请先登录'); return; }
+  const type = $('fbType').value, title = $('fbTitle').value.trim(), body = $('fbBody').value.trim(), contact = $('fbContact').value.trim();
+  if(!title){ toast('请填写反馈标题'); return; }
+  if(!body){ toast('请填写详细描述'); return; }
+  const fb = { id: Date.now(), type, title, body, contact, time: Date.now(), status:'pending', reward:0 };
+  const list = getFeedback();
+  list.unshift(fb);
+  store.set(getFeedbackKey(), list);
+  $('fbTitle').value=''; $('fbBody').value=''; $('fbContact').value='';
+  toast('反馈已提交，感谢你的建议！');
+  renderMyFeedback();
+}
+function renderMyFeedback(){
+  const list = getFeedback();
+  const box = $('myFeedbackList');
+  if(!list.length){
+    box.innerHTML = '<div class="pts-empty">暂无反馈记录</div>';
+    return;
+  }
+  const typeMap = { bug:'🐛 Bug', suggest:'💡 建议', experience:'😊 体验', other:'📝 其他' };
+  box.innerHTML = list.map(x => {
+    const badge = x.status==='pending' ? '<span class="fb-badge pending">待处理</span>'
+      : (x.reward>0 ? '<span class="fb-badge reward">已奖励 +'+x.reward+' 积分</span>' : '<span class="fb-badge done">已处理</span>');
+    return '<div class="fb-item"><div><div class="f-title">' + (typeMap[x.type]||'') + ' ' + esc(x.title) + '</div>'
+      + '<div class="f-body">' + esc(x.body) + '</div>'
+      + '<div class="f-meta">' + fmtDate(x.time) + (x.contact ? ' · 联系方式：'+esc(x.contact) : '') + '</div></div>'
+      + '<div class="f-status">' + badge + '</div></div>';
+  }).join('');
+}
+
+/* ================= 上传 ================= */
+const drop = $('dropZone'), fi = $('fileInput');
+drop.addEventListener('click', ()=>fi.click());
+['dragover','dragenter'].forEach(ev=>drop.addEventListener(ev, e=>{ e.preventDefault(); drop.classList.add('dragover'); }));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev, e=>{ e.preventDefault(); drop.classList.remove('dragover'); }));
+drop.addEventListener('drop', e=>{ const f = e.dataTransfer.files && e.dataTransfer.files[0]; if(f) acceptFile(f); });
+fi.addEventListener('change', ()=>{ if(fi.files[0]) acceptFile(fi.files[0]); fi.value=''; });
+
+function acceptFile(f){
+  if(!/\.(txt|epub|pdf)$/i.test(f.name)){ toast('暂不支持该格式，请选择 txt / epub / pdf'); return; }
+  if(f.size > 10*1048576){ toast('文件超过 10MB 限制'); return; }
+  if(/\.(pdf)$/i.test(f.name)){ toast('已接收 PDF，正式环境将检测是否为文本型（扫描版不支持）', 3000); }
+  S.file = { name:f.name, size:f.size, sample:false };
+  renderFileChip();
+}
+function useSample(){
+  S.file = { name:'Pride and Prejudice.epub', size:186*1024, sample:true };
+  if(!$('inTitle').value) $('inTitle').value = 'Pride and Prejudice';
+  renderFileChip();
+  toast('已载入示例书，点击「开始生成」体验全流程');
+}
+function renderFileChip(){
+  if(!S.file){ $('fileChip').classList.add('hidden'); $('btnGen').disabled = true; return; }
+  $('fileChip').classList.remove('hidden');
+  $('fcName').textContent = S.file.name;
+  $('fcSize').textContent = fmtSize(S.file.size) + (S.file.sample ? ' · 内置示例' : '');
+  $('btnGen').disabled = false;
+}
+function clearFile(){ S.file = null; renderFileChip(); }
+
+/* ================= 生成流程（模拟管线） ================= */
+async function startGeneration(){
+  if(!S.file){ toast('请先选择文件或使用示例书'); return; }
+  const tgt = $('selLang').value;
+  const title = $('inTitle').value.trim() || S.file.name.replace(/\.[^.]+$/, '');
+  procCancel = false;
+  if(!engineReady()){
+    const cfg = getEngineCfg();
+    const eng = ENGINES[cfg.engine] || ENGINES.baidu;
+    if(eng.official){
+      toast('积分余额不足，无法使用官方引擎翻译：请先签到或获取积分', 4000);
+    } else {
+      toast('翻译引擎未接入，不可翻译：请填写自己申请的 API Key（可在百度 / 有道 / DeepL 官网免费申请）', 4000);
+      const ek = $('engineKeys'); if(ek){ ek.classList.remove('shake'); void ek.offsetWidth; ek.classList.add('shake'); }
+    }
+    return;
+  }
+  const engName = (ENGINES[getEngineCfg().engine] || ENGINES.baidu).name;
+  showView('processing');
+  $('st2label').textContent = engName;
+  $('procTitle').textContent = '正在生成「' + title + '」';
+  for(let i=0;i<4;i++){ const st=$('st'+i); st.className='step'; st.querySelector('.dot').textContent = String(i+1); $('ex'+i).textContent=''; }
+  setBar(0); $('barHint').textContent = '准备中…';
+  const t0 = Date.now();
+  try{
+    // 步骤1 校验
+    setStep(0,'doing'); await animate(0, 8, 650);
+    $('ex0').textContent = '格式 / 大小校验通过'; setStep(0,'done');
+    // 步骤2 解析分句
+    setStep(1,'doing'); await animate(8, 24, 1250);
+    $('ex1').textContent = '检出 1 章 · 10 个翻译单元'; setStep(1,'done');
+    // 步骤3 逐段翻译
+    setStep(2,'doing'); $('barHint').textContent = '正在逐段翻译…';
+    const N = SAMPLE_BOOK.seg.length;
+    for(let i=1;i<=N;i++){
+      if(procCancel) return;
+      $('ex2').textContent = '已翻译 ' + i + ' / ' + N;
+      await animate(24, 84, i===N?260:380);
+      await sleep(60);
+    }
+    setStep(2,'done');
+    // 步骤4 排版导出
+    setStep(3,'doing'); $('barHint').textContent = '正在合成 EPUB / PDF…';
+    await animate(84, 100, 1150);
+    $('ex3').textContent = '双语 EPUB + PDF 生成完毕'; setStep(3,'done');
+    $('barHint').textContent = '完成';
+    await sleep(550);
+  }catch(e){ toast('处理异常：' + e.message); goUpload(); return; }
+  const seconds = Math.round((Date.now()-t0)/1000);
+  const book = Object.assign(mkBook(SAMPLE_BOOK, tgt, null, seconds, engName), { title });
+  S.books.unshift(book); saveBooks();
+  S.current = book;
+  // 官方引擎：消耗积分
+  if(isOfficialEngine()){
+    const cost = calcOfficialCost(SAMPLE_BOOK.seg.length);
+    spendPoints(cost, '官方引擎翻译', '《' + title + '》翻译消耗 ' + cost + ' 积分');
+    toast('已通过官方引擎翻译，消耗 ' + cost + ' 积分', 3000);
+  }
+  renderResult(book);
+  showView('result');
+  toast('《' + title + '》双语版已生成');
+}
+function setStep(i, cls){
+  const st = $('st'+i);
+  st.className = 'step ' + cls;
+  st.querySelector('.dot').textContent = cls==='done' ? '✓' : String(i+1);
+}
+function setBar(pct){
+  pct = Math.round(pct);
+  $('barFill').style.width = pct + '%';
+  $('barPct').textContent = pct + '%';
+}
+function animate(from, to, dur){
+  const t0 = performance.now();
+  return new Promise(res=>{
+    function tick(t){
+      const p = Math.min(1, (t - t0)/dur);
+      setBar(from + (to - from)*p);
+      if(p < 1) requestAnimationFrame(tick); else res();
+    }
+    requestAnimationFrame(tick);
+  });
+}
+
+/* ================= 结果 / 详情渲染 ================= */
+function segHtml(seg, i){
+  return '<div class="seg' + (seg.failed ? ' failed' : '') + '">'
+    + '<p class="s">' + esc(seg.s) + '</p>'
+    + (seg.failed
+        ? '<p class="t"><span class="flag">⚠ 翻译失败 · 保留原文</span></p>'
+        : '<p class="t">' + esc(seg.t) + '</p>')
+    + '</div>';
+}
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function renderResult(b){
+  $('resTitle').textContent = '《' + b.title + '》' + LANG_SHORT[b.srcLang] + '→' + LANG_SHORT[b.tgtLang] + ' 对照版已生成';
+  $('resMeta').textContent = (b.author ? b.author + ' · ' : '') + '目标语言：' + LANG_NAME[b.tgtLang] + ' · ' + fmtDate(b.createdAt);
+  $('rsSeg').textContent = b.segCount + ' 段';
+  $('rsFail').textContent = b.failedSegs + ' 段';
+  $('rsTime').textContent = b.seconds + ' 秒';
+  $('rsEngine').textContent = b.engine;
+  $('resPreview').innerHTML = b.seg.map(segHtml).join('');
+}
+function renderShelf(){
+  const box = $('shelfList');
+  if(!S.books.length){
+    box.innerHTML = '<div class="empty"><div class="eic">📭</div><p>书架还是空的，去生成你的第一本双语书吧</p><button class="btn" style="max-width:220px;margin:0 auto" onclick="goUpload()">去上传</button></div>';
+    return;
+  }
+  box.innerHTML = S.books.map(b=>
+    '<div class="book-card" onclick="openDetail(' + b.id + ')">'
+    + '<div class="top"><div class="b-cover">' + esc(b.title.slice(0,1).toUpperCase()) + '</div>'
+    + '<h4 title="' + esc(b.title) + '">' + esc(b.title) + '</h4>'
+    + '<span class="chip-status st-ready">已完成</span></div>'
+    + '<p class="meta">' + LANG_SHORT[b.srcLang] + '→' + LANG_SHORT[b.tgtLang] + ' · ' + b.segCount + ' 段 · ' + fmtDate(b.createdAt) + '</p>'
+    + '<div class="acts"><div class="act main" onclick="event.stopPropagation();openDetail(' + b.id + ')">查看 / 下载</div>'
+    + '<div class="act del" onclick="event.stopPropagation();askDelete(' + b.id + ')">删除</div></div></div>'
+  ).join('');
+}
+function openDetail(id){
+  const b = S.books.find(x=>x.id===id); if(!b) return;
+  S.current = b;
+  $('dtTitle').textContent = '《' + b.title + '》';
+  $('dtMeta').textContent = (b.author ? b.author + ' · ' : '') + LANG_NAME[b.srcLang] + ' → ' + LANG_NAME[b.tgtLang] + ' · ' + b.engine;
+  $('dtSeg').textContent = b.segCount + ' 段';
+  $('dtFail').textContent = b.failedSegs + ' 段';
+  $('dtTime').textContent = fmtDate(b.createdAt);
+  $('dtPreview').innerHTML = b.seg.map(segHtml).join('');
+  showView('detail');
+}
+function askDelete(id){
+  const b = id ? S.books.find(x=>x.id===id) : S.current;
+  if(!b) return;
+  $('modalDelText').textContent = '将删除《' + b.title + '》（' + b.segCount + ' 段），该操作不可恢复。';
+  $('modalDel').dataset.id = b.id;
+  $('modalDel').classList.remove('hidden');
+}
+function closeModal(){ $('modalDel').classList.add('hidden'); $('modalNotice').classList.add('hidden'); }
+function confirmDelete(){
+  const id = Number($('modalDel').dataset.id);
+  S.books = S.books.filter(x=>x.id!==id);
+  saveBooks(); closeModal();
+  if(!$('view-detail').classList.contains('hidden')){ toast('已删除'); goShelf(); }
+  else{ renderShelf(); toast('已删除'); }
+}
+
+/* ================= 导出：EPUB（真实文件）与 PDF（打印保存） ================= */
+function fileName(b, ext){ return b.title.replace(/[\\/:*?"<>|]/g,' ') + '-' + LANG_SHORT[b.srcLang] + LANG_SHORT[b.tgtLang] + '对照' + ext; }
+function downloadBlob(blob, name){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+function downloadEpub(){
+  const b = S.current; if(!b) return;
+  downloadBlob(buildEpub(b), fileName(b, '.epub'));
+  toast('EPUB 已生成并下载（可用 Calibre / Apple Books 打开）');
+}
+function downloadPdf(){
+  const b = S.current; if(!b) return;
+  $('printArea').innerHTML =
+    '<h1>' + esc(b.title) + ' · ' + LANG_NAME[b.srcLang] + '—' + LANG_NAME[b.tgtLang] + ' 双语对照版</h1>'
+    + '<p class="p-meta">' + esc(b.author||'') + ' · 由 Bilingual E-Book Studio 生成 · ' + fmtDate(b.createdAt) + '</p>'
+    + b.seg.map(s => s.failed
+        ? '<p class="ps">' + esc(s.s) + '</p><p class="pf">⚠ 翻译失败，保留原文</p>'
+        : '<p class="ps">' + esc(s.s) + '</p><p class="pt">' + esc(s.t) + '</p>').join('');
+  toast('演示环境：请在打印对话框中选择「另存为 PDF」', 3600);
+  setTimeout(()=>window.print(), 350);
+}
+
+/* --- 极简 EPUB 生成器（store 方式 ZIP，无第三方依赖） --- */
+const CRC_TABLE = (()=>{ const t = new Uint32Array(256);
+  for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c = (c&1) ? (0xEDB88320 ^ (c>>>1)) : (c>>>1); t[n]=c>>>0; }
+  return t; })();
+function crc32(bytes){ let c = 0xFFFFFFFF;
+  for(let i=0;i<bytes.length;i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c>>>8);
+  return (c ^ 0xFFFFFFFF) >>> 0; }
+function buildZip(files){
+  const enc = new TextEncoder();
+  const chunks = [], central = [];
+  let offset = 0;
+  const now = new Date();
+  const dosTime = (now.getHours()<<11) | (now.getMinutes()<<5) | (now.getSeconds()>>1);
+  const dosDate = ((now.getFullYear()-1980)<<9) | ((now.getMonth()+1)<<5) | now.getDate();
+  for(const f of files){
+    const nameB = enc.encode(f.name), crc = crc32(f.data), dl = f.data.length;
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0,0x04034b50,true); lh.setUint16(4,20,true); lh.setUint16(6,0x0800,true);
+    lh.setUint16(8,0,true); lh.setUint16(10,dosTime,true); lh.setUint16(12,dosDate,true);
+    lh.setUint32(14,crc,true); lh.setUint32(18,dl,true); lh.setUint32(22,dl,true);
+    lh.setUint16(26,nameB.length,true); lh.setUint16(28,0,true);
+    chunks.push(new Uint8Array(lh.buffer), nameB, f.data);
+    const ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0,0x02014b50,true); ch.setUint16(4,20,true); ch.setUint16(6,20,true);
+    ch.setUint16(8,0x0800,true); ch.setUint16(10,0,true); ch.setUint16(12,dosTime,true);
+    ch.setUint16(14,dosDate,true); ch.setUint32(16,crc,true); ch.setUint32(20,dl,true);
+    ch.setUint32(24,dl,true); ch.setUint16(28,nameB.length,true); ch.setUint32(42,offset,true);
+    central.push(new Uint8Array(ch.buffer), nameB);
+    offset += 30 + nameB.length + dl;
+  }
+  const cdSize = central.reduce((s,c)=>s+c.length,0);
+  const eo = new DataView(new ArrayBuffer(22));
+  eo.setUint32(0,0x06054b50,true); eo.setUint16(8,files.length,true); eo.setUint16(10,files.length,true);
+  eo.setUint32(12,cdSize,true); eo.setUint32(16,offset,true);
+  return new Blob([...chunks,...central,new Uint8Array(eo.buffer)], { type:'application/epub+zip' });
+}
+function buildEpub(b){
+  const enc = new TextEncoder();
+  const x = s => esc(s);
+  const ch1 = '<?xml version="1.0" encoding="utf-8"?>'
+    + '<html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><title>' + x(b.title) + '</title>'
+    + '<style>body{font-family:"Noto Serif CJK SC","Songti SC",serif;line-height:1.85}h1{font-size:1.3em;text-align:center}h2{font-size:1.05em;text-align:center;color:#555;font-weight:400}'
+    + '.s{margin:.5em 0 0}.t{margin:0 0 1.2em;color:#1e40af;background:#eff6ff;padding:.35em .6em;border-left:3px solid #93c5fd;border-radius:0 .3em .3em 0}'
+    + '.f{color:#92400e;background:#fffbeb;border-left:3px solid #fcd34d}.note{font-size:.8em;color:#888;text-align:center;margin-top:2em}</style></head><body>'
+    + '<h1>' + x(b.title) + '</h1><h2>双语对照版（' + x(LANG_NAME[b.srcLang]) + ' → ' + x(LANG_NAME[b.tgtLang]) + '）</h2>'
+    + b.seg.map(s => '<p class="s">' + x(s.s) + '</p>'
+        + (s.failed ? '<p class="t f">⚠ 翻译失败，保留原文</p>' : '<p class="t">' + x(s.t) + '</p>')).join('')
+    + '<p class="note">Generated by Bilingual E-Book Studio（原型演示文件）</p></body></html>';
+  const opf = '<?xml version="1.0" encoding="utf-8"?>'
+    + '<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid">'
+    + '<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">'
+    + '<dc:identifier id="uid">bes-prototype-' + b.id + '</dc:identifier>'
+    + '<dc:title>' + x(b.title) + ' 双语对照版</dc:title><dc:language>zh</dc:language>'
+    + '<meta property="dcterms:modified">' + new Date().toISOString().replace(/\.\d+Z/,'Z') + '</meta></metadata>'
+    + '<manifest><item id="ch1" href="ch1.xhtml" media-type="application/xhtml+xml"/>'
+    + '<item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/></manifest>'
+    + '<spine><itemref idref="ch1"/></spine></package>';
+  const nav = '<?xml version="1.0" encoding="utf-8"?>'
+    + '<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"><head><title>目录</title></head>'
+    + '<body><nav epub:type="toc"><ol><li><a href="ch1.xhtml">全文 · 双语对照</a></li></ol></nav></body></html>';
+  const container = '<?xml version="1.0"?>'
+    + '<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">'
+    + '<rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>';
+  return buildZip([
+    { name:'mimetype', data:enc.encode('application/epub+zip') },
+    { name:'META-INF/container.xml', data:enc.encode(container) },
+    { name:'OEBPS/content.opf', data:enc.encode(opf) },
+    { name:'OEBPS/nav.xhtml', data:enc.encode(nav) },
+    { name:'OEBPS/ch1.xhtml', data:enc.encode(ch1) }
+  ]);
+}
+
+/* ================= 可访问性增强（键盘可达 + ARIA） ================= */
+(function a11y(){
+  function mark(el){
+    if(!el || el.nodeType !== 1) return;
+    if(/^(BUTTON|A|INPUT|SELECT|TEXTAREA|LABEL)$/.test(el.tagName)) return;
+    if(!el.hasAttribute('role')) el.setAttribute('role','button');
+    if(!el.hasAttribute('tabindex')) el.tabIndex = 0;
+  }
+  function enhance(root){
+    if(!root || !root.querySelectorAll) return;
+    Array.prototype.forEach.call(root.querySelectorAll('[onclick]'), mark);
+  }
+  enhance(document);
+  new MutationObserver(function(muts){
+    muts.forEach(function(m){
+      Array.prototype.forEach.call(m.addedNodes, function(n){
+        if(n.nodeType !== 1) return;
+        if(n.matches && n.matches('[onclick]')) mark(n);
+        enhance(n);
+      });
+    });
+  }).observe(document.body, { childList:true, subtree:true });
+  document.addEventListener('keydown', function(e){
+    if(e.key !== 'Enter' && e.key !== ' ') return;
+    var t = e.target && e.target.closest && e.target.closest('[onclick]');
+    if(t && !/^(BUTTON|A|INPUT|SELECT|TEXTAREA)$/.test(t.tagName)){ e.preventDefault(); t.click(); }
+  });
+})();
+
+/* ================= 初始化 ================= */
+seed();
+(function init(){
+  renderNotices();
+  $('selEngine').value = getEngineCfg().engine;
+  renderEngineKeys();
+  const session = store.get('bes_session', null);
+  if(session && session.email){ enterApp(session); }
+  else{ showScreen('auth'); }
+  // 给 demo 账号预置积分，便于演示
+  if(store.get('bes_points_demo@book.app', null) === null){
+    store.set('bes_points_demo@book.app', 138);
+    store.set('bes_points_demo@book.app_log', [
+      { type:'earn', title:'新用户注册奖励', desc:'欢迎使用双语书工厂', val:'+50', time: Date.now()-3*86400000 },
+      { type:'earn', title:'每日签到', desc:'连续签到奖励', val:'+10', time: Date.now()-4*86400000 },
+      { type:'earn', title:'每日签到', desc:'连续签到奖励', val:'+10', time: Date.now()-2*86400000 },
+      { type:'spend', title:'官方引擎翻译', desc:'《Pride and Prejudice》翻译消耗', val:'-12', time: Date.now()-1*86400000 },
+      { type:'earn', title:'反馈奖励', desc:'优质反馈获得管理员奖励', val:'+80', time: Date.now()-86400000 }
+    ]);
+  }
+  updatePointsUI();
+})();
+</script>
+</body>
+</html>
